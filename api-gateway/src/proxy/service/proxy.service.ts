@@ -22,8 +22,6 @@ export class ProxyService {
     const service = serviceConfig[serviceName]
     const url = `${service.url}${path}`
 
-    this.logger.log(`Proxying ${method} request to ${serviceName}: ${url}`)
-
     try {
       const enhancedHeaders = {
         ...headers,
@@ -55,7 +53,6 @@ export class ProxyService {
     try {
       const service = serviceConfig[serviceName]
 
-      this.logger.log(`Checking health of service: ${JSON.stringify(service)}`)
       const response = await firstValueFrom(
         this.httpService.get(`${service.url}/health`, {
           timeout: 3000,
