@@ -1,142 +1,56 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Marketplace API Gateway - Under development
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A learning project for studying backend development, NestJS, and microservices.
+This application is the gateway component of a marketplace microservice project.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Run locally
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ pnpm install
+```sh
+pnpm install
+pnpm run dev
 ```
 
-## Compile and run the project
+The gateway defaults to `http://localhost:8000`; `PORT` overrides the listening
+port. See [`.env.example`](.env.example) for environment variable names. Downstream
+URLs are read when their configuration module is imported, so variables exported
+before startup are available to those reads.
 
-```bash
-# development
-$ pnpm run start
+Set `CORS_ORIGIN` to comma-separated origins without spaces, such as
+`http://localhost:3000,http://localhost:5173`. Leaving it unset allows any origin;
+an empty value does not have the same behavior.
 
-# watch mode
-$ pnpm run start:dev
+Use `pnpm run lint` to check code style and `pnpm run build` to compile the app.
 
-# production mode
-$ pnpm run start:prod
-```
+## Documents to write
 
-## Lint and format
+ADRs (Architecture Decision Records) capture a decision, its context, alternatives,
+and consequences.
 
-```bash
-# check formatting, imports, and lint rules
-$ pnpm run lint
+- [ ] Architecture overview: service responsibilities and request flow.
+- [ ] ADR: gateway responsibilities and boundaries with downstream services.
+- [ ] ADR: synchronous HTTP communication versus asynchronous messaging.
+- [ ] ADR: authentication ownership and trusted user-context forwarding.
+- [ ] ADR: timeout, retry, and upstream error-handling policies.
+- [ ] Configuration guide: environment variables, defaults, and startup behavior.
+- [ ] Operations guide: health checks, logs, and troubleshooting service failures.
 
-# apply automatic fixes and formatting
-$ pnpm run lint:fix
+## Current functionalities
 
-# format only
-$ pnpm run format
-```
+- Health checks report the users, products, checkout, and payments services
+  individually. The gateway reports `ok` even when a downstream is unhealthy.
+- Swagger generates interactive API documentation.
+- HTTP logging records incoming requests, response status, duration, and response
+  errors or timeout events.
+- Helmet configures HTTP security headers, and CORS uses a configurable origin
+  allowlist.
+- A global validation pipe enables DTO transformation and rejects fields without
+  validation decorators when validating DTO inputs. No request DTOs exist yet.
+- An injectable proxy service supports outbound HTTP requests with service-specific
+  timeouts and optional user-context headers. No HTTP forwarding routes are wired
+  to this method.
+- Environment configuration is loaded through Nest's `ConfigModule`. Downstream
+  defaults use localhost ports `8001` through `8004`.
 
-ESLint checks JavaScript and TypeScript using `eslint.config.mjs`. Prettier's
-formatting rules are reported as ESLint errors, including extra blank lines.
-Formatting uses two-space indentation, single quotes, trailing commas, and no
-unnecessary semicolons. Unused variables and parameters are errors; prefix
-intentionally unused ones with `_`. Imports are sorted with simple-import-sort.
-
-TypeScript ESLint reads `tsconfig.json` for type-aware promise checks and decorator
-metadata. Type-import checks skip decorated files when legacy decorator metadata
-is enabled, preserving value imports needed by NestJS dependency injection.
-
-Workspace settings enable ESLint diagnostics while typing, ESLint fixes on save,
-and Prettier formatting on save. Install the recommended ESLint and Prettier
-extensions and reload the editor after switching from Biome. Generated output and
-the pnpm lockfile are excluded from formatting.
-
-## Validation
-
-Automated tests are not configured for now. Use `pnpm run lint` and
-`pnpm run build` to check lint rules, formatting, and compilation.
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
-
-```bash
-$ pnpm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Rate-limit windows are configured, but limits are not enforced because no
+`ThrottlerGuard` is registered. Swagger's bearer-token scheme documents a token
+input; authentication is not implemented.

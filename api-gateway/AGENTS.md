@@ -6,6 +6,15 @@
 - Use Context7 for current library, framework, SDK, API, CLI, and cloud-service documentation. Resolve the library ID first, then query the selected library with the specific question. Prefer documentation matching the installed version. This is not required for general programming concepts, business-logic debugging, refactoring, or code review without library-specific questions.
 - Treat `package.json`, `eslint.config.mjs`, `.prettierrc.json`, `tsconfig.json` as the source of truth for installed tools, commands, formatting, and compiler behavior.
 
+## Learning notes and documentation maintenance
+
+- This is a learning project for backend development, NestJS, and microservices. Keep explanations approachable and grounded in the actual implementation.
+- When adding or changing files, inspect related modules, imports/exports, provider and middleware registration, request flow, configuration, and error handling to understand what is actually active. Preserve existing user changes.
+- Add or update concise descriptive comments explaining each file's responsibility and the relevant concepts: dependency injection, framework registration, asynchronous flow, configuration defaults and units, and failure behavior. Explain why and how meaningful parts work without narrating every line or repeating obvious names.
+- Keep comments accurate when behavior changes; distinguish configured options from enforced behavior and helpers from exposed HTTP functionality. Do not change runtime behavior solely to match an explanation.
+- Update `README.md` when features, behavior, setup commands, environment variables, or relevant limitations change. Keep it brief, describe implemented functionality only, keep the current functionality section last, and leave route inventories to Swagger.
+- Maintain the README's unchecked list of useful ADRs and project documents as architectural decisions arise. Mark items complete only when the corresponding document exists; keep documentation tasks separate from implemented features.
+
 ## Before implementation
 
 - Read this `AGENTS.md` before starting a new implementation.
