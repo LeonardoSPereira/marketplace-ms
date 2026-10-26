@@ -50,38 +50,32 @@ $ pnpm run start:prod
 # check formatting, imports, and lint rules
 $ pnpm run lint
 
-# apply safe fixes and formatting
+# apply automatic fixes and formatting
 $ pnpm run lint:fix
 
 # format only
 $ pnpm run format
 ```
 
-Biome replaces ESLint, Oxlint, and Prettier. It uses two-space indentation,
-single quotes, trailing commas, and no unnecessary semicolons. Unused variables,
-parameters, and imports are errors; prefix intentionally unused variables and
-parameters with `_`.
+ESLint checks JavaScript and TypeScript using `eslint.config.mjs`. Prettier's
+formatting rules are reported as ESLint errors, including extra blank lines.
+Formatting uses two-space indentation, single quotes, trailing commas, and no
+unnecessary semicolons. Unused variables and parameters are errors; prefix
+intentionally unused ones with `_`. Imports are sorted with simple-import-sort.
 
-NestJS parameter decorators are enabled. `useImportType` is disabled because
-injected classes need value imports for `emitDecoratorMetadata`; use type-only
-imports manually for interfaces and other types with no runtime role.
+TypeScript ESLint reads `tsconfig.json` for type-aware promise checks and decorator
+metadata. Type-import checks skip decorated files when legacy decorator metadata
+is enabled, preserving value imports needed by NestJS dependency injection.
 
-Floating and misused promises are checked with Biome's nursery rules, whose type
-inference differs from Oxlint's TypeScript-based checks. Keep the TypeScript build
-and tests as separate checks. Generated output and the pnpm lockfile are excluded.
+Workspace settings enable ESLint diagnostics while typing, ESLint fixes on save,
+and Prettier formatting on save. Install the recommended ESLint and Prettier
+extensions and reload the editor after switching from Biome. Generated output and
+the pnpm lockfile are excluded from formatting.
 
-## Run tests
+## Validation
 
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
-```
+Automated tests are not configured for now. Use `pnpm run lint` and
+`pnpm run build` to check lint rules, formatting, and compilation.
 
 ## Deployment
 

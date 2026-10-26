@@ -4,7 +4,7 @@
 
 - Use English in chat and repository documentation unless the user explicitly requests another language. When a prompt mixes languages, ask which language to use.
 - Use Context7 for current library, framework, SDK, API, CLI, and cloud-service documentation. Resolve the library ID first, then query the selected library with the specific question. Prefer documentation matching the installed version. This is not required for general programming concepts, business-logic debugging, refactoring, or code review without library-specific questions.
-- Treat `package.json`, `biome.json`, `tsconfig.json`, and the Vitest configuration files as the source of truth for installed tools, commands, formatting, compiler behavior, and test discovery.
+- Treat `package.json`, `eslint.config.mjs`, `.prettierrc.json`, `tsconfig.json` as the source of truth for installed tools, commands, formatting, and compiler behavior.
 
 ## Before implementation
 
@@ -18,18 +18,17 @@
 ## Project tooling and validation
 
 - Use pnpm for dependency management and scripts. Keep `pnpm-lock.yaml` synchronized with dependency changes.
-- Use Biome as the formatter, import organizer, and linter. Do not introduce ESLint, Oxlint, or Prettier configuration without an explicit requirement.
-- Follow `biome.json`: two-space indentation, single quotes, trailing commas, and semicolons only when needed. Prefix intentionally unused variables and parameters with `_`.
-- Use `pnpm run lint` to check, `pnpm run lint:fix` to apply safe fixes, and `pnpm run format` for formatting only. Review automatic fixes.
-- For TypeScript or NestJS configuration changes, run `pnpm run build` to verify compilation. Run existing tests relevant to the behavior changed; run `pnpm run test:e2e` when HTTP behavior, dependency injection, or application setup changes.
-- For test changes, run the focused tests, `pnpm run test:cov`, `pnpm run lint`, and `pnpm exec tsc --noEmit`. Run E2E tests when the change affects their behavior or configuration.
+- Use ESLint for linting and import sorting, and Prettier for formatting. Keep `prettier/prettier` enabled as an error so formatting violations appear in editor diagnostics. Do not reintroduce Biome or Oxlint without an explicit requirement.
+- Follow `.prettierrc.json`: two-space indentation, single quotes, trailing commas, and semicolons only when needed. Prefix intentionally unused variables and parameters with `_`.
+- Use `pnpm run lint` to check, `pnpm run lint:fix` to apply automatic fixes, and `pnpm run format` for formatting only. Review automatic fixes.
+- For TypeScript or NestJS configuration changes, run `pnpm run build` to verify compilation. Use linting, type checks, and appropriate manual validation while automated tests are absent.
 - For documentation-only changes, verify referenced paths and commands; application builds and tests are not required.
 - Report failed checks and checks that could not run. Do not claim a passing lint check also verifies TypeScript types or runtime behavior.
 - Do not manually edit generated build output, coverage output, `node_modules/`, or TypeScript build caches.
 
 ## NestJS structure and dependency injection
 
-- Organize new features as cohesive NestJS modules under `src/<feature>/`, keeping their controllers, services, DTOs, and tests together. Keep the existing root application files unless a feature requires extraction.
+- Organize new features as cohesive NestJS modules under `src/<feature>/`, keeping their controllers, services, and DTOs together. Keep the existing root application files unless a feature requires extraction.
 - Keep `AppModule` focused on application composition and `main.ts` focused on bootstrapping and global application setup.
 - Keep controllers focused on HTTP input, delegation, and responses. Put orchestration and application logic in injectable services; put external-service details behind injectable adapters.
 - Reuse existing providers through module imports and exports. Export only the providers other modules need; avoid duplicating provider registrations or constructing injected services with `new`.
@@ -38,7 +37,7 @@
 - Prefer named exports for classes, functions, constants, and types. Use default exports only where a tool or framework expects them, such as configuration files.
 - Use NestJS filename conventions such as `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.dto.ts`, `*.guard.ts`, and `*.adapter.ts`.
 - This project uses ESM with TypeScript NodeNext resolution. Use `.js` extensions in relative TypeScript imports, matching the emitted files. Do not introduce path aliases without configuring both compilation and runtime resolution.
-- Preserve value imports for injected classes and DTO classes required by decorator metadata. Use `import type` only for symbols with no runtime role. Do not enable Biome's `useImportType` rule globally while relying on `emitDecoratorMetadata`.
+- Preserve value imports for injected classes and DTO classes required by decorator metadata. Use `import type` only for symbols with no runtime role. `@typescript-eslint/consistent-type-imports` uses the TypeScript configuration and skips decorated files with legacy decorator metadata; do not force type-only imports for runtime dependencies.
 
 ## HTTP contracts and validation
 
@@ -70,16 +69,10 @@
 - Prefer guard clauses and early returns when a condition can finish the current control-flow path. Keep `else` when it makes mutually exclusive branches clearer.
 - Never use `void` to discard a promise. Await asynchronous operations in async functions, or return the promise when forwarding it to a caller that handles it. Explicitly handle errors for intentional background work.
 - Do not block the Node.js event loop with synchronous I/O or expensive CPU work in request handlers.
-- Prefer precise types and `unknown` with narrowing at untrusted boundaries. Biome permits explicit `any`, but that is not a reason to discard available types.
+- Prefer precise types and `unknown` with narrowing at untrusted boundaries. ESLint permits explicit `any`, but that is not a reason to discard available types.
 
 ## Automated testing
 
-- Implement or extend automated tests only after the user explicitly confirms that the feature is complete and requests the testing phase. During development, propose scenarios in the implementation plan when one exists. This timing rule permits manual validation, lint/type checks, and running existing tests.
-- Use the existing Node-based Vitest setup. Co-locate unit tests as `*.spec.ts`; put HTTP E2E tests under `test/` as `*.e2e-spec.ts`, matching the current configurations.
-- Use `@nestjs/testing` and `TestingModule` for tests that exercise NestJS dependency injection. Test pure helpers directly without bootstrapping Nest.
-- Mock injected providers or adapters at the boundary with Vitest mocks or testing-module overrides. Do not call production, homologation, or other shared live services from automated tests.
-- Use Supertest against a Nest test application's HTTP server for E2E tests. Initialize the app, apply relevant production setup, and close the app and other resources in cleanup.
-- Prioritize observable behavior: validation failures, authorization boundaries, upstream failures and timeouts, response contracts, and successful requests. Avoid tests that merely mirror implementation details.
-- Preserve existing coverage thresholds and CI requirements. Carry forward the intended minimum of 80% for statements, branches, functions, and lines globally and per file when coverage enforcement is implemented in an approved testing phase. Those thresholds are not currently configured; do not claim they are enforced or change configuration during unrelated work.
-- Do not exclude application-authored modules simply to satisfy coverage targets. Exclude generated code and build artifacts when configuring coverage.
-- Document testing conventions in `documents/` when test infrastructure, configuration, commands, or CI behavior materially change. Do not reference guides that have not been created, or update documentation for routine test-case edits and test counts.
+- Automated test infrastructure, scripts, and starter tests have intentionally been removed for now. Do not reintroduce them during unrelated implementation work.
+- Add automated tests and choose their tooling only when the user explicitly requests a testing phase. Manual validation, linting, builds, and type checks remain permitted.
+- When testing is reintroduced, document its commands and conventions alongside the implemented setup rather than assuming a previous test runner or coverage policy is still configured.
