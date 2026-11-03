@@ -1,9 +1,12 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
+import { ConfigModule, ConfigService } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerModule } from '@nestjs/throttler'
 
 import { AppController } from './app.controller.js'
 import { AppService } from './app.service.js'
+import { AuthModule } from './auth/auth.module.js'
+import { CustomThrottlerGuard } from './guards/throttler.guard.js'
 import { LoggingMiddleware } from './middleware/logging/logging.middleware.js'
 import { MiddlewareModule } from './middleware/middleware.module.js'
 import { ProxyModule } from './proxy/proxy.module.js'
@@ -15,30 +18,42 @@ import { ProxyModule } from './proxy/proxy.module.js'
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    // Define named request windows (ttl is in milliseconds). These options
-    // alone do not enforce limits: no ThrottlerGuard is currently registered.
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1_000, // 1 second
-        limit: 100, // 100 requests per second
-      },
-      {
-        name: 'medium',
-        ttl: 60_000, // 1 minute
-        limit: 100, // 100 requests per minute
-      },
-      {
-        name: 'long',
-        ttl: 900_000, // 15 minutes
-        limit: 1000, // 1000 requests per 15 minutes
-      },
-    ]),
+    // Resolve request limits through injected configuration; ttl is in milliseconds.
+    // The APP_GUARD provider below activates the custom guard for controllers.
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [
+        {
+          name: 'short',
+          ttl: 1_000, // 1 second
+          limit: configService.get<number>('RATE_LIMIT_SHORT', 10),
+        },
+        {
+          name: 'medium',
+          ttl: 60_000, // 1 minute
+          limit: configService.get<number>('RATE_LIMIT_MEDIUM', 100),
+        },
+        {
+          name: 'long',
+          ttl: 900_000, // 15 minutes
+          limit: configService.get<number>('RATE_LIMIT_LONG', 1000),
+        },
+      ],
+    }),
     ProxyModule,
     MiddlewareModule,
+    AuthModule,
   ],
   controllers: [AppController], // Register the HTTP route handlers.
-  providers: [AppService], // Let Nest create and inject this service.
+  providers: [
+    AppService,
+    // Register a global guard through DI so Nest supplies its dependencies.
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

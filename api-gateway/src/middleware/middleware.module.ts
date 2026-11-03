@@ -6,7 +6,7 @@ import { LoggingMiddleware } from './logging/logging.middleware.js'
 @Module({
   imports: [
     // A separate, unnamed throttler configuration from AppModule's windows.
-    // It also requires a registered ThrottlerGuard to enforce request limits.
+    // This is not another guard registration; AppModule registers the global guard.
     ThrottlerModule.forRoot([
       {
         ttl: 60_000, // 1 minute in milliseconds
