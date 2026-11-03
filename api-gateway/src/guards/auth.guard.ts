@@ -8,6 +8,13 @@ import { AuthGuard as PassportAuthGuard } from '@nestjs/passport'
 import { Observable } from 'rxjs'
 
 import { IS_PUBLIC_KEY } from '../auth/decorators/public.decorator.js'
+import { Role } from '../common/dtos/role.dto.js'
+
+interface JwtUser {
+  userId: string
+  email: string
+  role: Role
+}
 
 const JwtGuard = PassportAuthGuard('jwt')
 
@@ -33,7 +40,13 @@ export class JwtAuthGuard extends JwtGuard {
     return super.canActivate(context)
   }
 
-  handleRequest(err: any, user: any, _info: any) {
+  handleRequest<TUser = JwtUser>(
+    err: Error | null,
+    user: TUser | false,
+    _info: unknown,
+    _context: ExecutionContext,
+    _status?: unknown,
+  ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException()
     }

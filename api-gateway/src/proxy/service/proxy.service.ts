@@ -3,7 +3,16 @@ import { Injectable, Logger } from '@nestjs/common'
 import type { AxiosResponse } from 'axios'
 import { firstValueFrom } from 'rxjs'
 
+import { Role } from '../../common/dtos/role.dto.js'
 import { serviceConfig } from '../../config/gateway.config.js'
+
+interface UserInfo {
+  userId: string
+  email: string
+  role: Role
+}
+
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 @Injectable()
 export class ProxyService {
@@ -16,11 +25,11 @@ export class ProxyService {
   async proxyRequest(
     // keyof restricts callers to the configured service names at compile time.
     serviceName: keyof typeof serviceConfig,
-    method: string,
+    method: HttpMethod,
     path: string,
-    data?: any,
-    headers?: any,
-    userInfo?: any,
+    data?: unknown,
+    headers?: Record<string, string>,
+    userInfo?: UserInfo,
   ): Promise<AxiosResponse<unknown>> {
     const service = serviceConfig[serviceName]
     // Callers supply the downstream path, including its leading slash.
@@ -75,11 +84,11 @@ export class ProxyService {
         status: 'healthy',
         data: response.data,
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Turn transport failures and rejected HTTP responses into health data.
       return {
         status: 'unhealthy',
-        error: error.message,
+        error: (error as Error).message,
       }
     }
   }

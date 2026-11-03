@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common'
+import { ApiTags } from '@nestjs/swagger'
 
 import { AppService } from './app.service.js'
 import { ProxyService } from './proxy/service/proxy.service.js'
 
 // This prefix combines with each method's route: /health and /health/hello.
+@ApiTags('Health')
 @Controller('health')
 export class AppController {
   // Nest supplies these providers; ProxyService is exported by ProxyModule.

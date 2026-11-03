@@ -2,7 +2,17 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 
+import { Role } from '../../common/dtos/role.dto.js'
 import { AuthService } from '../services/auth.service.js'
+
+interface JwtPayload {
+  sub: string
+  email: string
+  role: Role
+  token: string
+  iat?: number
+  exp?: number
+}
 
 // Inactive until registered as a provider and invoked by a JWT guard.
 // Passport verifies the bearer token signature and expiration before validate.
@@ -16,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  async validate(payload: any) {
+  async validate(payload: JwtPayload) {
     if (!payload) throw new UnauthorizedException('Invalid token payload')
 
     // This implementation additionally expects a nested JWT in payload.token.

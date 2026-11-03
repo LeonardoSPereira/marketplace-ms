@@ -1,0 +1,26 @@
+# Open architecture and contract questions
+
+Snapshot: 2026-11-03. All entries are unresolved. Alternatives in the ADRs are
+options for discussion, not evidence of approval or a requirement to implement
+every option. See the [status index](README.md) for maintenance conventions.
+
+| ID      | Decision still needed                                                                                                                     | Existing context                                                                                  |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| DEC-001 | Which future routes require forwarding, aggregation, or protocol adaptation, and where should auth integration adapters live?             | [Gateway boundaries ADR](../ADR/0001-gateway-boundaries.md)                                       |
+| DEC-002 | Which workflows, if any, need messaging rather than synchronous HTTP?                                                                     | [Communication ADR](../ADR/0002-service-communication.md)                                         |
+| DEC-003 | Which routes are public, which authentication mechanism applies, and how should guards be registered and ordered?                         | [Authentication ADR](../ADR/0003-authentication-context.md)                                       |
+| DEC-004 | What identity shape and trust boundary should downstream services accept, and which credentials/headers should be forwarded?              | [Authentication ADR](../ADR/0003-authentication-context.md)                                       |
+| DEC-005 | Who may assign roles, and how should allowed registration roles be enforced?                                                              | [Authentication ADR](../ADR/0003-authentication-context.md), [auth guide](../auth-and-swagger.md) |
+| DEC-006 | What are the confirmed login/registration contracts, expiresIn units, and policy for malformed or sensitive downstream response data?     | [Response contracts ADR](../ADR/0004-response-contracts.md)                                       |
+| DEC-007 | How should transport failures, timeouts, upstream statuses, and malformed responses map to gateway errors?                                | [Timeout/error ADR](../ADR/0005-timeouts-errors-retries.md)                                       |
+| DEC-008 | Which operations are safe to retry, what idempotency strategy is needed, and are inbound deadlines required?                              | [Timeout/error ADR](../ADR/0005-timeouts-errors-retries.md), [operations](../operations.md)       |
+| DEC-009 | What should throttle identity, independent windows, blocking, and response headers mean? Should duplicate configurations be consolidated? | [Rate-limit ADR](../ADR/0006-rate-limiting.md)                                                    |
+| DEC-010 | What deployment topology and reverse-proxy trust apply, and will replicas need shared throttle storage?                                   | [Rate-limit ADR](../ADR/0006-rate-limiting.md)                                                    |
+| DEC-011 | How should configuration be loaded consistently and validated at startup, with which required settings and defaults?                      | [Configuration guide](../configuration.md)                                                        |
+| DEC-012 | Should health probes run concurrently, and what readiness/liveness contracts should distinguish gateway and dependency availability?      | [Communication ADR](../ADR/0002-service-communication.md), [operations](../operations.md)         |
+| DEC-013 | What URL redaction, correlation, retention, metrics, tracing, and log-sink behavior is useful for the evolving project?                   | [Logging guide](../implementation/logging.md), [operations](../operations.md)                     |
+
+Test tooling and coverage scope remain deferred until an explicitly requested
+testing phase. Cross-service contracts and ownership decisions require checking
+the relevant service implementations when that work begins; this register does
+not assume those services already satisfy the gateway's documented expectations.

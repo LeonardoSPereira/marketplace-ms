@@ -1,11 +1,12 @@
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common'
+import { Request, Response } from 'express'
 
 @Injectable()
 export class LoggingMiddleware implements NestMiddleware {
   // Group these messages under the HTTP context in Nest's logger.
   private readonly logger = new Logger('HTTP')
 
-  use(req: any, res: any, next: () => void) {
+  use(req: Request, res: Response, next: () => void) {
     const { method, originalUrl, ip } = req
     const userAgent = req.get('User-Agent') || ''
     const startTime = Date.now() // Capture timing separately for each request.

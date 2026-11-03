@@ -3,7 +3,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { firstValueFrom } from 'rxjs'
 
+import { Role } from '../../common/dtos/role.dto.js'
 import { serviceConfig } from '../../config/gateway.config.js'
+import { AuthResponseDto } from '../dtos/auth-response.dto.js'
+import { LoginDto } from '../dtos/login.dto.js'
+import { RegisterDto } from '../dtos/register.dto.js'
 
 // Expected users-service session shape; the HTTP response is not validated.
 export interface UserSession {
@@ -13,7 +17,7 @@ export interface UserSession {
     email: string
     firstName: string
     lastName: string
-    role: string
+    role: Role
     status: string
   } | null
 }
@@ -29,7 +33,8 @@ export class AuthService {
   ) {}
 
   // Verification uses JWT_SECRET from JwtModule; this helper is not an HTTP route.
-  async validateJwtToken(token: string): Promise<any> {
+  // The return annotation does not validate decoded claims against the login DTO.
+  async validateJwtToken(token: string): Promise<AuthResponseDto> {
     try {
       const decoded = this.jwtService.verify(token)
       return decoded
@@ -57,12 +62,15 @@ export class AuthService {
   }
 
   // Preserve the users-service response body; the gateway does not issue tokens.
-  async login(loginDto: { email: string; password: string }) {
+  // The HTTP generic provides compile-time typing, not runtime schema validation.
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     try {
       const { data } = await firstValueFrom(
-        this.httpService.post(`${serviceConfig.users.url}/login`, loginDto, {
-          timeout: serviceConfig.users.timeout,
-        }),
+        this.httpService.post<AuthResponseDto>(
+          `${serviceConfig.users.url}/login`,
+          loginDto,
+          { timeout: serviceConfig.users.timeout },
+        ),
       )
 
       return data
@@ -73,11 +81,11 @@ export class AuthService {
     }
   }
 
-  // Forward registration unchanged; no gateway DTO rules are applied here.
-  async register(registerDto: any) {
+  // Forward validated registration input; the downstream response shape is unspecified.
+  async register(registerDto: RegisterDto): Promise<unknown> {
     try {
       const { data } = await firstValueFrom(
-        this.httpService.post(
+        this.httpService.post<unknown>(
           `${serviceConfig.users.url}/auth/register`,
           registerDto,
           {

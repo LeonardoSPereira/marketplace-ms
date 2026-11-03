@@ -63,7 +63,8 @@ async function bootstrap() {
   } satisfies CorsOptions)
 
   // Apply validation to controller inputs globally. DTO classes and validation
-  // decorators define the rules; the current routes have no DTO inputs.
+  // decorators define the rules for LoginDto and RegisterDto. Swagger property
+  // metadata documents fields but does not activate validation.
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true, // Convert plain input objects into their DTO instances.
@@ -76,9 +77,54 @@ async function bootstrap() {
   // addBearerAuth documents a token scheme; it does not authenticate requests.
   const config = new DocumentBuilder()
     .setTitle('Marketplace API Gateway')
-    .setDescription('API Gateway for Marketplace Microservices')
+    .setDescription(
+      `
+      API Gateway for a Marketplace application with microservices.
+
+      Available services:
+      - Users service: Authentication and user management
+      - Products service: Catalog and products management
+      - Checkout service: Shopping cart and checkout process
+      - Payments service: Payment processing
+      
+      Authentication:
+      - Use JWT Bearer tokens for authenticated routes
+      - Use Session tokens for session validations
+      `,
+    )
     .setVersion('1.0')
-    .addBearerAuth()
+    .setContact(
+      'API Support',
+      'https://example.com/support',
+      'support@example.com',
+    )
+    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'x-session-token',
+        in: 'header',
+        description: 'Session token for user validation',
+      },
+      'session-auth',
+    )
+    .addTag('Authentication', 'Endpoints for authentication and authorization')
+    .addTag('Users', 'Endpoints for User Management')
+    .addTag('Products', 'Endpoints for the product catalog')
+    .addTag('Checkout', 'Endpoints for shopping carts and orders')
+    .addTag('Payments', 'Payment Processing Endpoints')
+    .addTag('Health', 'Endpoints for health monitoring')
     .build()
 
   const document = SwaggerModule.createDocument(app, config)
