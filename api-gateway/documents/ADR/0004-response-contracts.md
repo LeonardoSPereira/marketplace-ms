@@ -1,6 +1,7 @@
 # ADR 0004: Downstream response contracts and validation
 
 - Recorded: 2026-11-03
+- Reviewed: 2026-11-05
 - Status: Recorded from current implementation; open questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
 
@@ -35,6 +36,8 @@ sensitive fields. The expiresIn unit is unspecified. The local JWT verification
 helper also uses AuthResponseDto as a return annotation without validating claims.
 
 ## Open questions
+
+Tracked as DEC-006 in the [decision register](../development-status/open-questions.md).
 
 Confirm the downstream login contract and token lifetime units, define a
 registration response, and decide where response validation belongs. Do not

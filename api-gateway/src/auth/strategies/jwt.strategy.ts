@@ -2,8 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
 
-import { Role } from '../../common/dtos/role.dto.js'
-import { AuthService } from '../services/auth.service.js'
+import { AuthService } from '@/auth/services/auth.service.js'
+import { Role } from '@/common/dtos/role.dto.js'
 
 interface JwtPayload {
   sub: string

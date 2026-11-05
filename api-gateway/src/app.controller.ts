@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 
-import { AppService } from './app.service.js'
-import { ProxyService } from './proxy/service/proxy.service.js'
+import { AppService } from '@/app.service.js'
+import { ProxyService } from '@/proxy/service/proxy.service.js'
 
 // This prefix combines with each method's route: /health and /health/hello.
 @ApiTags('Health')

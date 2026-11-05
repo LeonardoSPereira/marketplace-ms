@@ -1,6 +1,6 @@
 # Not implemented or not wired
 
-Snapshot: 2026-11-03. All entries are open. These are gateway observations, not
+Snapshot: 2026-11-05. All entries are open. These are gateway observations, not
 an audit of downstream services or a commitment to implement every capability.
 The [development-status index](README.md) explains scope and maintenance.
 
@@ -14,6 +14,12 @@ The [development-status index](README.md) explains scope and maintenance.
 | GAP-006 | Separate dependency readiness/liveness integration                                 | Current health aggregation reports gateway ok even when dependencies fail. No orchestration probe configuration is provided here. [Operations](../operations.md)                                               |
 | GAP-007 | Request correlation, metrics, tracing, and configured centralized log storage      | Current observability consists of HTTP/application logs and health reporting. [Logging](../implementation/logging.md), [operations](../operations.md)                                                          |
 | GAP-008 | Automated test infrastructure and tests                                            | Intentionally removed for the current learning phase; reintroduction requires an explicitly requested testing phase under repository rules. [AGENTS.md](../../AGENTS.md)                                       |
+
+Circuit/cache helpers exist only in the internal proxy method; their presence
+does not add protection to active auth or health routes. See
+[ADR 0007](../ADR/0007-proxy-resilience.md) and LIM-013 through LIM-015 in
+[known limitations](limitations.md). Whether to extend their use remains DEC-014,
+rather than an approved implementation task.
 
 No broker integration, distributed throttle storage, retry mechanism, or global
 inbound request deadline is configured. These are optional design choices to

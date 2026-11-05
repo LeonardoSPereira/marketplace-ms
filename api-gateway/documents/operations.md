@@ -1,5 +1,7 @@
 # Operations and troubleshooting
 
+Reviewed: 2026-11-05
+
 ## Start and inspect
 
 From the gateway directory, use pnpm install and pnpm run dev for local work.
@@ -22,6 +24,20 @@ readiness and does not produce a failing HTTP status for downstream outages.
 Health requests can themselves be rate-limited. No separate readiness/liveness
 integration or orchestration probe configuration is provided here.
 
+## Build and startup limitations
+
+The source now uses `@/` imports with a `paths` entry in
+[tsconfig.json](../tsconfig.json). The supplied production command runs Node
+without an alias loader or rewrite step; the TypeScript mapping alone does not
+establish runtime resolution. If startup reports an unresolved `@/` module,
+inspect the emitted imports and startup configuration. This documentation review
+does not establish a successful build or startup.
+
+The internal proxy helper returns body or fallback data as `Promise<unknown>`.
+Callers must narrow or validate this value; the annotation does not verify a
+downstream schema. Keep compiler diagnostics separate from runtime observations;
+formatting and lint checks cannot verify response bodies.
+
 ## Common symptoms
 
 | Symptom                                    | Check in this repository                                                                                                            |
@@ -41,6 +57,15 @@ credentials or tokens to URLs when investigating; URL paths and query strings
 are logged without redaction. See [HTTP logging](implementation/logging.md) for
 fields, events, and limits, and [throttling](implementation/throttling.md) for
 counter and header behavior.
+
+## Internal resilience diagnostics
+
+Login, registration, session helpers, and health probes bypass the circuit breaker.
+Their failures will not open proxy circuits or use product fallback data. There
+is no HTTP circuit-inspection/reset endpoint. The circuit provider's inspection
+methods are internal helpers, and `/health` does not report circuit/cache state.
+See [proxy resilience](implementation/proxy-resilience.md) for fixed values and
+failure behavior before interpreting internal helper logs as route protection.
 
 ## Current observability limits
 

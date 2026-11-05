@@ -10,15 +10,16 @@ import {
 } from '@nestjs/swagger'
 import { Throttle } from '@nestjs/throttler'
 
-import { AuthResponseDto } from '../dtos/auth-response.dto.js'
-import { LoginDto } from '../dtos/login.dto.js'
-import { RegisterDto } from '../dtos/register.dto.js'
-import { AuthService } from '../services/auth.service.js'
+import { AuthResponseDto } from '@/auth/dtos/auth-response.dto.js'
+import { LoginDto } from '@/auth/dtos/login.dto.js'
+import { RegisterDto } from '@/auth/dtos/register.dto.js'
+import { AuthService } from '@/auth/services/auth.service.js'
 
 // Expose auth requests while AuthService owns downstream calls and failures.
 // Input DTOs drive validation; response DTOs keep Swagger schemas reusable.
 // Explicit response types retain schemas with this ESM build and CLI plugin.
-// Response annotations do not validate downstream response bodies.
+// Response annotations do not validate downstream response bodies. These handlers
+// call AuthService directly, bypassing the proxy circuit breaker and fallbacks.
 @ApiTags('Authentication')
 @ApiBadRequestResponse({ description: 'Request body failed DTO validation' })
 @ApiTooManyRequestsResponse({ description: 'Request limit exceeded' })

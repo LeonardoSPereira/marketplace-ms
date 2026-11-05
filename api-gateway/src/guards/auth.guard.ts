@@ -7,8 +7,8 @@ import { Reflector } from '@nestjs/core'
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport'
 import { Observable } from 'rxjs'
 
-import { IS_PUBLIC_KEY } from '../auth/decorators/public.decorator.js'
-import { Role } from '../common/dtos/role.dto.js'
+import { IS_PUBLIC_KEY } from '@/auth/decorators/public.decorator.js'
+import { Role } from '@/common/dtos/role.dto.js'
 
 interface JwtUser {
   userId: string

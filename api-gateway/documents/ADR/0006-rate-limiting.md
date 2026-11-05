@@ -1,6 +1,7 @@
 # ADR 0006: Rate-limit tracking, windows, and storage
 
 - Recorded: 2026-11-03
+- Reviewed: 2026-11-05
 - Status: Recorded from current implementation; open questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
 
@@ -38,6 +39,8 @@ overwritten across windows and report full TTL seconds instead of remaining
 times. Restarts lose counters and replicas do not share them.
 
 ## Open questions
+
+Tracked as DEC-009 and DEC-010 in the [decision register](../development-status/open-questions.md).
 
 Resolve window key isolation, block behavior, header semantics, duplicate
 configuration, reverse-proxy identity, and storage requirements before treating

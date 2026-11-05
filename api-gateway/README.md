@@ -37,6 +37,9 @@ the corresponding counts. These are configured windows; see the limitations belo
 before relying on them as independent quotas.
 
 Use `pnpm run lint` to check code style and `pnpm run build` to compile the app.
+The current `@/` imports have a TypeScript mapping but no configured production
+runtime resolver; startup remains subject to that limitation. See
+[operations](documents/operations.md) for build/startup troubleshooting.
 
 ## Documentation
 
@@ -48,8 +51,12 @@ Use `pnpm run lint` to check code style and `pnpm run build` to compile the app.
   [configuration](documents/configuration.md), and
   [operations](documents/operations.md).
 - [Auth and Swagger](documents/auth-and-swagger.md),
-  [HTTP logging](documents/implementation/logging.md), and
-  [throttling](documents/implementation/throttling.md).
+  [HTTP logging](documents/implementation/logging.md),
+  [throttling](documents/implementation/throttling.md), and
+  [internal proxy resilience](documents/implementation/proxy-resilience.md).
+
+- [Understanding circuit breakers, fallbacks, and caching](documents/circuit-breakers-and-fallbacks.md):
+  concepts, state transitions, and a product-read example.
 
 Swagger is available at `/api/docs`; keep endpoint details there.
 
@@ -66,6 +73,9 @@ than claim historical approval.
 - [x] [ADR 0004: downstream response contracts and validation](documents/ADR/0004-response-contracts.md).
 - [x] [ADR 0005: timeout, retry, and upstream error handling](documents/ADR/0005-timeouts-errors-retries.md).
 - [x] [ADR 0006: rate-limit identity, windows, and storage](documents/ADR/0006-rate-limiting.md).
+- [x] [ADR 0007: internal proxy circuits, cache, and fallbacks](documents/ADR/0007-proxy-resilience.md).
+- [x] [Circuit breaker, fallback, and cache concepts](documents/circuit-breakers-and-fallbacks.md).
+- [x] [Internal proxy resilience guide](documents/implementation/proxy-resilience.md).
 - [x] [Configuration guide: variables, defaults, and startup](documents/configuration.md).
 - [x] [Operations guide: health, logs, and troubleshooting](documents/operations.md).
 - [x] [Development-status register: gaps, limitations, and open questions](documents/development-status/README.md).
@@ -96,12 +106,18 @@ than claim historical approval.
   5 requests per minute; registration configures a medium-window override of 3
   requests per minute. Exceeding the custom guard's hit limit returns HTTP 429.
 - An injectable proxy service supports outbound HTTP requests with service-specific
-  timeouts and optional user-context headers. No HTTP forwarding routes are wired
-  to this method.
+  timeouts and optional user-context headers. Its internal circuit breaker uses
+  per-service state; product GET failures use cached data or an empty listing,
+  while other fallbacks throw errors. No HTTP forwarding routes call this method;
+  auth and health calls bypass its resilience logic.
 - Environment configuration is loaded through Nest's `ConfigModule`. Downstream
   defaults use localhost ports `8001` through `8004`.
 
-Current limitations:
+Current limitations (details in the [status register](documents/development-status/limitations.md)):
+
+- Internal proxy cache keys omit user identity, and circuit state has no limit
+  on concurrent half-open
+  attempts. These helpers need contract and isolation decisions before exposure.
 
 - JWT strategy, authentication/session/role guards, and user/role/public decorators
   exist as helpers but are not registered or applied to routes. Current routes do

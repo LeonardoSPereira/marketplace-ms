@@ -1,5 +1,7 @@
 # Configuration and startup
 
+Reviewed: 2026-11-05
+
 Configuration currently uses both ConfigService and direct environment reads.
 There is no application-wide startup schema that validates required settings.
 See [the example file](../.env.example) for variable names; empty values are not
@@ -36,7 +38,12 @@ interpreting configured counts as independent enforced quotas.
 
 Service request timeouts are 10,000 milliseconds in gateway.config.ts; health
 probes use 3,000 milliseconds directly in ProxyService. These are not environment
-options. The JWT module has a 24-hour signing default, but login does not sign
+options. Internal proxy circuits use a failure threshold of 3 and a 30,000 ms
+reset delay. Their `timeout: 30_000` option does not enforce an operation deadline.
+The generic breaker defaults are 5 failures, `timeout: 60_000`, and
+`resetTimeout: 30_000`. Cache fallback max age defaults to 300,000 ms. These values
+are fixed in code and apply only to the internal helper; see
+[proxy resilience](implementation/proxy-resilience.md). The JWT module has a 24-hour signing default, but login does not sign
 tokens. The documented response expiresIn unit remains unspecified.
 
 CORS accepts requests without Origin. Configured browser origins must match

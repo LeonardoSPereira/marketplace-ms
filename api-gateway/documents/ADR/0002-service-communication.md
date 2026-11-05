@@ -1,6 +1,7 @@
 # ADR 0002: Synchronous HTTP communication
 
 - Recorded: 2026-11-03
+- Reviewed: 2026-11-05
 - Status: Recorded from current implementation; open questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
 
@@ -33,6 +34,8 @@ availability. Health checks are sequential because each array entry is awaited
 before Promise.all receives it. Their latency can accumulate across services.
 
 ## Open questions
+
+Tracked as DEC-002 and DEC-012 in the [decision register](../development-status/open-questions.md).
 
 Choose asynchronous messaging only when a concrete workflow needs it. Decide
 whether health probes should run concurrently; no concurrency refactor is part

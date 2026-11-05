@@ -3,11 +3,11 @@ import { Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { firstValueFrom } from 'rxjs'
 
-import { Role } from '../../common/dtos/role.dto.js'
-import { serviceConfig } from '../../config/gateway.config.js'
-import { AuthResponseDto } from '../dtos/auth-response.dto.js'
-import { LoginDto } from '../dtos/login.dto.js'
-import { RegisterDto } from '../dtos/register.dto.js'
+import { AuthResponseDto } from '@/auth/dtos/auth-response.dto.js'
+import { LoginDto } from '@/auth/dtos/login.dto.js'
+import { RegisterDto } from '@/auth/dtos/register.dto.js'
+import { Role } from '@/common/dtos/role.dto.js'
+import { serviceConfig } from '@/config/gateway.config.js'
 
 // Expected users-service session shape; the HTTP response is not validated.
 export interface UserSession {

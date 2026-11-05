@@ -1,5 +1,7 @@
 # Auth contracts and Swagger
 
+Reviewed: 2026-11-05
+
 This guide describes the current gateway implementation. Endpoint details and
 request examples are available in Swagger at `/api/docs`.
 
@@ -20,7 +22,9 @@ The controller delegates to `AuthService`. The service awaits one HTTP Observabl
 response through `firstValueFrom`, applies the configured users-service timeout
 of 10,000 ms, and returns the downstream body unchanged. Caught upstream failures,
 including timeouts and conflicts, become HTTP 401. The gateway does not preserve
-upstream error statuses or implement retries for these requests.
+upstream error statuses or implement retries for these requests. Auth calls do
+not use the internal proxy circuit breaker or cache/default fallbacks; see
+[proxy resilience](implementation/proxy-resilience.md).
 
 ## Input DTOs and validation
 
@@ -28,6 +32,8 @@ upstream error statuses or implement retries for these requests.
 `RegisterDto` adds string first and last names plus an optional role defaulting to
 `Role.USER` when omitted. The name validators allow empty strings. The role is
 checked as a string, so values outside the documented enum can currently pass.
+`IsOptional` also accepts an explicit `null` role; the default applies when the
+field is omitted, rather than replacing `null`.
 
 `ApiProperty` describes fields for Swagger. Runtime validation comes from
 `class-validator` decorators and the pipe registered in `src/main.ts`. TypeScript

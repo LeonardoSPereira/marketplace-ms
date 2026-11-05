@@ -3,13 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerModule } from '@nestjs/throttler'
 
-import { AppController } from './app.controller.js'
-import { AppService } from './app.service.js'
-import { AuthModule } from './auth/auth.module.js'
-import { CustomThrottlerGuard } from './guards/throttler.guard.js'
-import { LoggingMiddleware } from './middleware/logging/logging.middleware.js'
-import { MiddlewareModule } from './middleware/middleware.module.js'
-import { ProxyModule } from './proxy/proxy.module.js'
+import { AppController } from '@/app.controller.js'
+import { AppService } from '@/app.service.js'
+import { AuthModule } from '@/auth/auth.module.js'
+import { CustomThrottlerGuard } from '@/guards/throttler.guard.js'
+import { LoggingMiddleware } from '@/middleware/logging/logging.middleware.js'
+import { MiddlewareModule } from '@/middleware/middleware.module.js'
+import { ProxyModule } from '@/proxy/proxy.module.js'
 
 // The root module connects feature modules, HTTP controllers, and providers.
 @Module({

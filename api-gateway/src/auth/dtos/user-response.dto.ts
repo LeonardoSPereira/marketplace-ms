@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-import { Role } from '../../common/dtos/role.dto.js'
+import { Role } from '@/common/dtos/role.dto.js'
 
 // Nested Swagger model for public login user fields. Omitting passwords here
 // documents the contract; it does not strip fields from the downstream response.

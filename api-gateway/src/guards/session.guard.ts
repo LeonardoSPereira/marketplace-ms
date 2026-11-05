@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 
-import { AuthService } from '../auth/services/auth.service.js'
+import { AuthService } from '@/auth/services/auth.service.js'
 
 // Optional session authentication; not applied to any current route.
 // AuthService is exported by AuthModule for injection where this guard is used.

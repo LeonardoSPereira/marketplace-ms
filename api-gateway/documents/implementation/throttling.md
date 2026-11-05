@@ -1,5 +1,7 @@
 # Throttling implementation
 
+Reviewed: 2026-11-05
+
 [AppModule](../../src/app.module.ts) registers CustomThrottlerGuard through
 APP_GUARD, enabling checks for controller requests, including health handlers.
 [The custom guard](../../src/guards/throttler.guard.ts) extends the installed

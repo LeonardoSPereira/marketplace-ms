@@ -1,6 +1,7 @@
 # ADR 0003: Authentication ownership and user-context forwarding
 
 - Recorded: 2026-11-03
+- Reviewed: 2026-11-05
 - Status: Recorded from current implementation; open questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
 
@@ -37,6 +38,8 @@ JWT guard and session guard produce different identity field names (userId and
 id). Their types do not establish a common trusted forwarding contract.
 
 ## Open questions
+
+Tracked as DEC-003, DEC-004, and DEC-005 in the [decision register](../development-status/open-questions.md).
 
 Choose guard registration, public-route policy, identity shape, role ownership,
 header allowlisting, and downstream trust enforcement before exposing forwarding.

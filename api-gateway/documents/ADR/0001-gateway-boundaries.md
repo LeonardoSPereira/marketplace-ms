@@ -1,6 +1,7 @@
 # ADR 0001: Gateway responsibilities and downstream boundaries
 
 - Recorded: 2026-11-03
+- Reviewed: 2026-11-05
 - Status: Recorded from current implementation; open questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
 
@@ -35,6 +36,8 @@ services. The gateway is still coupled to downstream paths and response bodies.
 `ProxyService.proxyRequest` is a helper, not an exposed routing feature.
 
 ## Open questions
+
+Tracked as DEC-001 in the [decision register](../development-status/open-questions.md).
 
 Define which future routes require aggregation or adaptation. Auth outbound
 calls currently live directly in AuthService; no separate adapter is present.

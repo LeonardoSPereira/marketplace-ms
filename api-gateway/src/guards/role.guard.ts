@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 
-import { ROLES_KEY } from '../auth/decorators/roles.decorator.js'
+import { ROLES_KEY } from '@/auth/decorators/roles.decorator.js'
 
 // Optional authorization guard; not applied to current routes. It expects an
 // earlier authentication guard to populate request.user when roles are required.
