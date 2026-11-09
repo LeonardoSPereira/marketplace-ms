@@ -1,6 +1,6 @@
 # Internal proxy resilience
 
-Reviewed: 2026-11-05
+Reviewed: 2026-11-09 (health-related updates)
 
 For an introduction to the concepts and state diagrams, read
 [Understanding circuit breakers, fallbacks, and caching](../circuit-breakers-and-fallbacks.md).
@@ -14,8 +14,10 @@ and [FallbackModule](../../src/common/fallback/fallback.module.ts) dependencies.
 Nest injects their exported providers into
 [ProxyService](../../src/proxy/service/proxy.service.ts). Only `proxyRequest`
 invokes the breaker and fallbacks. There is no controller caller for that method.
-Login, registration, session validation, and health probes use direct HTTP calls
-and bypass this path. Module registration alone does not protect those routes.
+Login, registration, and session validation use direct HTTP calls and bypass this
+path. Active health probes use the same breaker registry with separate health
+keys and a throwing fallback, without product cache/default fallback data. See
+[health checks](health-checks.md). Module registration alone does not protect routes.
 
 ## Execution and circuit state
 
@@ -44,8 +46,8 @@ schedule a timer. Opening replaces that timestamp using `resetTimeout`. Actual
 outbound HTTP calls retain the 10,000 ms service timeout. Fallback success does
 not call `onSuccess`; fallback errors propagate to the caller.
 
-Inspection/reset methods are internal helpers, without HTTP endpoints or health
-integration. `getCircuitState` exposes a mutable state reference; `getAllCircuits`
+Inspection/reset methods remain internal helpers, without HTTP endpoints or
+circuit-state fields in health responses. `getCircuitState` exposes a mutable state reference; `getAllCircuits`
 copies the map but shares its state objects. They are not read-only snapshots.
 
 ## Fallback selection and cache

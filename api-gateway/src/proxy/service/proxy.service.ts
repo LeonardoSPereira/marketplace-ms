@@ -97,7 +97,8 @@ export class ProxyService {
     return circuitBreakerResult
   }
 
-  // Probe a downstream service without making its failure reject /health.
+  // Legacy direct probe helper with no active controller caller. HealthModule
+  // uses HealthCheckService instead, with separate circuits and timeout settings.
   async getServiceHealth(serviceName: keyof typeof serviceConfig) {
     try {
       const service = serviceConfig[serviceName]

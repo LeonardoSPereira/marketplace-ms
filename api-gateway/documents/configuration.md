@@ -1,6 +1,6 @@
 # Configuration and startup
 
-Reviewed: 2026-11-05
+Reviewed: 2026-11-09 (health-related sections; unrelated observations retain their prior scope)
 
 Configuration currently uses both ConfigService and direct environment reads.
 There is no application-wide startup schema that validates required settings.
@@ -36,19 +36,22 @@ interpreting configured counts as independent enforced quotas.
 
 ## Fixed options and units
 
-Service request timeouts are 10,000 milliseconds in gateway.config.ts; health
-probes use 3,000 milliseconds directly in ProxyService. These are not environment
-options. Internal proxy circuits use a failure threshold of 3 and a 30,000 ms
+Service request timeouts are 10,000 milliseconds in gateway.config.ts. Active
+health probes use that value for both Axios and RxJS timeout handling. The unused
+legacy ProxyService health helper retains a separate 3,000 ms timeout. These
+are not environment options. Health circuits use the generic breaker defaults
+below; see [health checks](implementation/health-checks.md). Internal proxy circuits use a failure threshold of 3 and a 30,000 ms
 reset delay. Their `timeout: 30_000` option does not enforce an operation deadline.
 The generic breaker defaults are 5 failures, `timeout: 60_000`, and
 `resetTimeout: 30_000`. Cache fallback max age defaults to 300,000 ms. These values
-are fixed in code and apply only to the internal helper; see
+are fixed in code; the product fallback cache applies only to the internal proxy
+helper. Empty retry/timeout scaffolds supply no additional options or behavior. See
 [proxy resilience](implementation/proxy-resilience.md). The JWT module has a 24-hour signing default, but login does not sign
 tokens. The documented response expiresIn unit remains unspecified.
 
 CORS accepts requests without Origin. Configured browser origins must match
 exactly, including scheme and port; avoid spaces between comma-separated entries.
-CORS allows credentials, caches preflights for 86,400 seconds, and does not list
+CORS allows credentials, caches preflight for 86,400 seconds, and does not list
 x-session-token in allowedHeaders. Session guards are inactive. Helmet's HSTS
 maxAge is 31,536,000 seconds. No trust-proxy configuration is set in bootstrap.
 

@@ -11,6 +11,13 @@ import { LoggingMiddleware } from '@/middleware/logging/logging.middleware.js'
 import { MiddlewareModule } from '@/middleware/middleware.module.js'
 import { ProxyModule } from '@/proxy/proxy.module.js'
 
+import { CircuitBreakerModule } from './common/circuit-breaker/circuit-breaker.module.js'
+import { FallbackModule } from './common/fallback/fallback.module.js'
+import { HealthCheckModule } from './common/health-check/health-check.module.js'
+import { RetryModule } from './common/retry/retry.module.js'
+import { TimeoutModule } from './common/timeout/timeout.module.js'
+import { HealthModule } from './health/health.module.js'
+
 // The root module connects feature modules, HTTP controllers, and providers.
 @Module({
   imports: [
@@ -44,6 +51,12 @@ import { ProxyModule } from '@/proxy/proxy.module.js'
     ProxyModule,
     MiddlewareModule,
     AuthModule,
+    HealthCheckModule,
+    HealthModule,
+    FallbackModule,
+    CircuitBreakerModule,
+    TimeoutModule,
+    RetryModule,
   ],
   controllers: [AppController], // Register the HTTP route handlers.
   providers: [

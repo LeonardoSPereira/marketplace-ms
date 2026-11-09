@@ -1,9 +1,18 @@
 # ADR 0001: Gateway responsibilities and downstream boundaries
 
 - Recorded: 2026-11-03
+- Health update: 2026-11-09
 - Reviewed: 2026-11-05
-- Status: Recorded from current implementation; open questions remain.
+- Status: Partially superseded by [ADR 0008](0008-health-checks.md) for health; other questions remain.
 - Scope: Retrospective description, not approval of unresolved policy or defects.
+
+## Subsequent health implementation
+
+Health-specific observations below describe the earlier snapshot. On 2026-11-09,
+[ADR 0008](0008-health-checks.md) records dedicated concurrent probes with
+10,000 ms timeouts, health circuit keys, and cached observations. It supersedes
+the earlier active health ownership, sequencing, timeout, and bypass descriptions;
+other observations keep their original scope. Readiness/liveness policy remains open.
 
 ## Context
 

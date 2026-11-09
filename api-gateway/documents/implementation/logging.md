@@ -1,6 +1,6 @@
 # HTTP logging implementation
 
-Reviewed: 2026-11-05
+Reviewed: 2026-11-09 (health-related updates)
 
 [LoggingMiddleware](../../src/middleware/logging/logging.middleware.ts) uses Nest
 Logger with the HTTP context. [AppModule.configure](../../src/app.module.ts)
@@ -28,7 +28,10 @@ is no redaction. Sensitive data embedded in URLs can therefore enter logs.
 The internal circuit breaker logs operation errors and state transitions, while
 fallback providers log cache keys, hits, defaults, and errors. ProxyService
 itself declares a logger but currently makes no logging calls. These helper logs
-are not emitted by auth or health paths. Cache keys include caller-supplied paths
+are not emitted by auth paths. Active health probes emit breaker logs under
+health-prefixed keys, plus a service-name error log when a probe fails; they do
+not use the fallback cache providers. See [health checks](health-checks.md).
+Cache keys include caller-supplied paths
 and can contain sensitive URL data. AuthService maps failures without its own
 detailed upstream log entry. See [proxy resilience](proxy-resilience.md).
 Bootstrap currently prints startup URLs through console.log.

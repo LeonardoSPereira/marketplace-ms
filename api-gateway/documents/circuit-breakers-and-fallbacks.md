@@ -178,7 +178,9 @@ The responsibilities are split between injectable providers:
 These providers are wired together through
 [ProxyModule](../src/proxy/proxy.module.ts). No controller currently calls
 `proxyRequest`; login, registration, session validation, and health probes bypass
-its circuit and fallback path.
+its proxy circuit and fallback path. Active health probes use separate health
+keys in the same breaker registry and a throwing fallback; see
+[health checks](implementation/health-checks.md).
 
 The current implementation also has important boundaries: circuit/cache state is
 local to one process, circuits are shared by service name, cache keys omit caller

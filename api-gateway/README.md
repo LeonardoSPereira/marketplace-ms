@@ -37,8 +37,8 @@ the corresponding counts. These are configured windows; see the limitations belo
 before relying on them as independent quotas.
 
 Use `pnpm run lint` to check code style and `pnpm run build` to compile the app.
-The current `@/` imports have a TypeScript mapping but no configured production
-runtime resolver; startup remains subject to that limitation. See
+The inspected Nest build rewrites `@/` imports to relative paths; development
+startup was verified on 2026-11-09. The production command was not exercised. See
 [operations](documents/operations.md) for build/startup troubleshooting.
 
 ## Documentation
@@ -53,7 +53,8 @@ runtime resolver; startup remains subject to that limitation. See
 - [Auth and Swagger](documents/auth-and-swagger.md),
   [HTTP logging](documents/implementation/logging.md),
   [throttling](documents/implementation/throttling.md), and
-  [internal proxy resilience](documents/implementation/proxy-resilience.md).
+  [internal proxy resilience](documents/implementation/proxy-resilience.md), and
+  [health checks](documents/implementation/health-checks.md).
 
 - [Understanding circuit breakers, fallbacks, and caching](documents/circuit-breakers-and-fallbacks.md):
   concepts, state transitions, and a product-read example.
@@ -76,17 +77,23 @@ than claim historical approval.
 - [x] [ADR 0007: internal proxy circuits, cache, and fallbacks](documents/ADR/0007-proxy-resilience.md).
 - [x] [Circuit breaker, fallback, and cache concepts](documents/circuit-breakers-and-fallbacks.md).
 - [x] [Internal proxy resilience guide](documents/implementation/proxy-resilience.md).
+- [x] [Health checks and aggregation guide](documents/implementation/health-checks.md).
+- [x] [ADR 0008: dedicated concurrent health probes](documents/ADR/0008-health-checks.md).
 - [x] [Configuration guide: variables, defaults, and startup](documents/configuration.md).
 - [x] [Operations guide: health, logs, and troubleshooting](documents/operations.md).
 - [x] [Development-status register: gaps, limitations, and open questions](documents/development-status/README.md).
+- [ ] Follow-up ADR: readiness/liveness contracts and health cache policy.
 - [ ] Follow-up ADR: enforced authentication and downstream identity trust.
 - [ ] Follow-up ADR: corrected rate-limit windows and deployment storage strategy.
 - [ ] Follow-up ADR: consistent upstream errors and runtime response validation.
 
 ## Current functionalities
 
-- Health checks report the users, products, checkout, and payments services
-  individually. The gateway reports `ok` even when a downstream is unhealthy.
+- Gateway health reports process information. Dependency checks probe users,
+  products, checkout, and payments concurrently through separate health circuits;
+  individual lookups return cached observations. Dependency failures change the
+  aggregate body status while normal handler completion remains HTTP 200.
+  Readiness/liveness helpers exist but have no active HTTP handlers.
 - Swagger generates interactive API documentation. The login response uses
   `AuthResponseDto` (`user`, `accessToken`, `sessionToken`, `expiresIn`); the CLI
   plugin supplements DTO metadata. DTOs retain `ApiProperty` metadata and share a
@@ -109,11 +116,15 @@ than claim historical approval.
   timeouts and optional user-context headers. Its internal circuit breaker uses
   per-service state; product GET failures use cached data or an empty listing,
   while other fallbacks throw errors. No HTTP forwarding routes call this method;
-  auth and health calls bypass its resilience logic.
+  auth calls bypass its resilience logic. Health probes use the shared breaker
+  with separate keys and a throwing fallback.
 - Environment configuration is loaded through Nest's `ConfigModule`. Downstream
   defaults use localhost ports `8001` through `8004`.
 
 Current limitations (details in the [status register](documents/development-status/limitations.md)):
+
+- Health observations have no cache expiry; successful downstream bodies are not
+  validated.
 
 - Internal proxy cache keys omit user identity, and circuit state has no limit
   on concurrent half-open

@@ -1,9 +1,18 @@
 # ADR 0005: Timeouts, retries, and upstream errors
 
 - Recorded: 2026-11-03
-- Status: Partially superseded by [ADR 0007](0007-proxy-resilience.md) for proxy error handling; other observations and questions remain.
+- Health update: 2026-11-09
+- Status: Partially superseded by [ADR 0007](0007-proxy-resilience.md) for proxy error handling and [ADR 0008](0008-health-checks.md) for health; other observations and questions remain.
 - Reviewed: 2026-11-05
 - Scope: Retrospective description, not approval of unresolved policy or defects.
+
+## Subsequent health implementation
+
+Health-specific observations below describe the earlier snapshot. On 2026-11-09,
+[ADR 0008](0008-health-checks.md) records dedicated concurrent probes with
+10,000 ms timeouts, health circuit keys, and cached observations. It supersedes
+the earlier active health ownership, sequencing, timeout, and bypass descriptions;
+other observations keep their original scope. Readiness/liveness policy remains open.
 
 ## Context
 

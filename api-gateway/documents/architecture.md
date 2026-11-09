@@ -1,22 +1,25 @@
 # Architecture and request flow
 
-Reviewed: 2026-11-05
+Reviewed: 2026-11-09 (health-related sections; unrelated observations retain their prior scope)
 
 The gateway is an ESM Nest application using Express. This document describes
 this repository; downstream service internals have not been reviewed.
 
 ## Composition
 
-| Component                | Current responsibility                                             |
-| ------------------------ | ------------------------------------------------------------------ |
-| `main.ts`                | Bootstrap, Helmet, CORS, global validation, Swagger, HTTP listener |
-| `AppModule`              | Compose modules, register logging middleware and global throttler  |
-| `AuthModule`             | Register auth controller/service and HTTP/JWT dependencies         |
-| `ProxyModule`            | Export an injectable HTTP helper and downstream health probes      |
-| `CircuitBreakerModule`   | Export process-local circuit state for the internal proxy helper   |
-| `FallbackModule`         | Export cache and default/error fallback factories                  |
-| `MiddlewareModule`       | Provide logging middleware; retain a separate throttler config     |
-| Downstream configuration | Addresses for users, products, checkout, payments                  |
+| Component                      | Current responsibility                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| `main.ts`                      | Bootstrap, Helmet, CORS, global validation, Swagger, HTTP listener            |
+| `AppModule`                    | Compose modules, register logging middleware and global throttler             |
+| `AuthModule`                   | Register auth controller/service and HTTP/JWT dependencies                    |
+| `ProxyModule`                  | Export an internal HTTP forwarding helper and a legacy unused health helper   |
+| `HealthModule`                 | Register the active health controller and internal aggregation service        |
+| `HealthCheckModule`            | Export concurrent downstream probes and their observation cache               |
+| `RetryModule`, `TimeoutModule` | Register empty scaffold services; no retry or deadline behavior               |
+| `CircuitBreakerModule`         | Export process-local circuit state for proxy helpers and active health probes |
+| `FallbackModule`               | Export cache and default/error fallback factories                             |
+| `MiddlewareModule`             | Provide logging middleware; retain a separate throttler config                |
+| Downstream configuration       | Addresses for users, products, checkout, payments                             |
 
 Users handles delegated login and registration requests. All four services are
 health-probe targets. Products, checkout, and payments have no business-facing
@@ -43,10 +46,13 @@ are inactive.
 
 ## Health path
 
-AppController invokes ProxyService health probes with separate three-second
-per-service timeouts. Although wrapped in Promise.all, the inner awaits make the
-four probes sequential. Each failure becomes an unhealthy entry; the gateway
-still reports top-level status ok. Successful probe bodies are not validated.
+HealthController uses the exported HealthCheckService for concurrent probes with
+10,000 ms per-service timeouts and separate health circuit keys. Gateway process
+information, dependency aggregation, and cached observations have distinct
+handlers. HealthService aggregation/readiness/liveness methods remain internal
+helpers. See [health checks](implementation/health-checks.md) for registration,
+cache behavior, error contracts, and policy differences. AppController currently
+has no route handlers.
 
 ## Internal proxy path
 
@@ -54,20 +60,20 @@ still reports top-level status ok. Successful probe bodies are not validated.
 `ProxyService`. Its `proxyRequest` helper wraps an outbound operation in a circuit
 keyed by service name. Product GET failures can return cached data or an empty
 listing; other service/method fallbacks throw plain errors. This method has no
-controller caller. Auth requests and health probes use separate direct HTTP calls,
-so importing these modules does not give those routes circuit protection.
+controller caller. Auth requests bypass this path. Active health probes use the same breaker
+provider through separate health keys, without product cache/default fallbacks.
 
 The helper returns a response body or fallback data as `Promise<unknown>`. See [proxy resilience](implementation/proxy-resilience.md) for
 state transitions, timeout semantics, cache isolation, and contract limitations.
 
-Source imports now include `@/` aliases configured in TypeScript. Runtime alias
-resolution is not configured in the supplied Node startup command; see
-[operations](operations.md) before assuming the application starts successfully.
+Source imports now include `@/` aliases configured in TypeScript. The inspected Nest build output rewrites those imports to relative paths; see
+[operations](operations.md) for the distinction between compiler mappings and
+verified startup.
 
 ## Source and related documents
 
 - [Bootstrap](../src/main.ts), [composition](../src/app.module.ts),
-  [health controller](../src/app.controller.ts)
+  [health controller](../src/health/health.controller.ts)
 - [Gateway boundaries ADR](ADR/0001-gateway-boundaries.md)
 - [Communication ADR](ADR/0002-service-communication.md)
 - [Auth and Swagger](auth-and-swagger.md), [operations](operations.md)

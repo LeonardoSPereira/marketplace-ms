@@ -1,21 +1,22 @@
 # Architecture Decision Records
 
 These records describe architecture visible in this repository.
-Reviewed: 2026-11-05. Recorded dates preserve each snapshot; ADR 0007 documents
-the later internal proxy behavior.
+Updated: 2026-11-09. Recorded dates preserve each snapshot; ADR 0007 documents
+the internal proxy behavior and ADR 0008 the subsequent health implementation.
 They do not claim historical approval or that listed alternatives were evaluated
 at the time the code was written. Open questions identify decisions still needed;
 recording a limitation does not endorse it.
 
-| Record                                  | Topic                                                | Status                                                        |
-| --------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
-| [0001](0001-gateway-boundaries.md)      | Gateway responsibilities and downstream boundaries   | Recorded; open questions                                      |
-| [0002](0002-service-communication.md)   | Synchronous HTTP communication                       | Recorded; open questions                                      |
-| [0003](0003-authentication-context.md)  | Authentication ownership and user-context forwarding | Recorded; open questions                                      |
-| [0004](0004-response-contracts.md)      | Downstream response contracts and validation         | Recorded; open questions                                      |
-| [0005](0005-timeouts-errors-retries.md) | Timeouts, retries, and upstream errors               | Partially superseded by 0007; auth/health observations remain |
-| [0006](0006-rate-limiting.md)           | Rate-limit tracking, windows, and storage            | Recorded; open questions                                      |
-| [0007](0007-proxy-resilience.md)        | Internal proxy circuits, cache, and fallbacks        | Recorded; open questions                                      |
+| Record                                  | Topic                                                | Status                                                                        |
+| --------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [0001](0001-gateway-boundaries.md)      | Gateway responsibilities and downstream boundaries   | Partially superseded by 0008 for health; other questions remain               |
+| [0002](0002-service-communication.md)   | Synchronous HTTP communication                       | Partially superseded by 0008 for health; other questions remain               |
+| [0003](0003-authentication-context.md)  | Authentication ownership and user-context forwarding | Recorded; open questions                                                      |
+| [0004](0004-response-contracts.md)      | Downstream response contracts and validation         | Recorded; open questions                                                      |
+| [0005](0005-timeouts-errors-retries.md) | Timeouts, retries, and upstream errors               | Partially superseded by 0007 (proxy) and 0008 (health); auth questions remain |
+| [0006](0006-rate-limiting.md)           | Rate-limit tracking, windows, and storage            | Recorded; open questions                                                      |
+| [0007](0007-proxy-resilience.md)        | Internal proxy circuits, cache, and fallbacks        | Partially superseded by 0008 for health; other questions remain               |
+| [0008](0008-health-checks.md)           | Dedicated concurrent health probes                   | Recorded; contract questions remain                                           |
 
 ## Maintaining records
 
@@ -34,4 +35,5 @@ architectural decision:
 - [HTTP logging](../implementation/logging.md)
 - [Throttling](../implementation/throttling.md)
 - [Internal proxy resilience](../implementation/proxy-resilience.md)
+- [Health checks](../implementation/health-checks.md)
 - [Auth contracts and Swagger](../auth-and-swagger.md)

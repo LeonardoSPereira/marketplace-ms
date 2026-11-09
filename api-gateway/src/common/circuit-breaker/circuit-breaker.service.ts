@@ -6,8 +6,8 @@ import {
   CircuitBreakerStateEnum,
 } from './circuit-breaker.interface.js'
 
-// In-memory circuit registry used by the internal proxy helper only. Auth calls
-// and health probes bypass it; state is lost on restart and is not shared by replicas.
+// In-memory registry shared by proxy helpers and active health probes using
+// separate keys. Auth bypasses it; restart clears state and replicas do not share it.
 @Injectable()
 export class CircuitBreakerService {
   private readonly logger = new Logger(CircuitBreakerService.name)

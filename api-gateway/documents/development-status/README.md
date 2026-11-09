@@ -1,6 +1,6 @@
 # Development status
 
-Updated: 2026-11-05
+Updated: 2026-11-09 (health entries and scaffold observations)
 
 The gateway and the other services that will form this marketplace microservices
 project are under active development. A substantial part of the intended system
@@ -26,6 +26,11 @@ or release commitment. Some absences may remain intentional: messaging, shared
 counter storage, and response validation depend on requirements yet to be chosen.
 Database ownership belongs to downstream services; its absence in this gateway
 is not itself a missing gateway feature.
+
+The 2026-11-09 update records concurrent health probes, partially resolves
+LIM-009 and DEC-012, and records the build/startup evidence for LIM-016. Health
+cache limitations and readiness/liveness gaps remain tracked. See
+[ADR 0008](../ADR/0008-health-checks.md).
 
 ## Maintenance
 
