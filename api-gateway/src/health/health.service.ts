@@ -6,11 +6,13 @@ import {
 } from '@/common/health-check/health-check.interface.js'
 import { HealthCheckService } from '@/common/health-check/health-check.service.js'
 
-// Aggregate injected probe results; readiness/liveness helpers are not HTTP routes.
+// Aggregate injected probe results and supply readiness/liveness bodies for
+// HealthController (/health/ready and /health/live).
 @Injectable()
 export class HealthService {
   constructor(private readonly healthCheckService: HealthCheckService) {}
 
+  // Internal aggregation called by getReadyStatus(); not exposed as its own route.
   async getHealthStatus() {
     const healthChecks = await this.healthCheckService.checkAllServices()
 
@@ -44,8 +46,8 @@ export class HealthService {
       }
     })
 
-    // Internal policy: even all-unhealthy results become degraded here, unlike
-    // the controller aggregation. No active HTTP handler calls this helper.
+    // Any unhealthy dependency sets status to degraded (even if all fail), so
+    // getReadyStatus() below reports not_ready whenever any service is unhealthy.
     if (hasUnhealthyServices) {
       results.status = HealthStatus.DEGRADED
     }

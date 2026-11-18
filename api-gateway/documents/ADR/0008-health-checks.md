@@ -1,9 +1,20 @@
 # ADR 0008: Dedicated concurrent health probes
 
 - Recorded: 2026-11-09
-- Status: Recorded from current implementation; contract questions remain open.
+- Readiness/retry update: 2026-11-18
+- Status: Partially superseded by [ADR 0009](0009-proxy-retries-timeouts-and-health-routes.md) for active `/health/ready` and `/health/live` routes and implemented `RetryService` / `TimeoutService` providers; concurrent probe and cache observations remain active.
 - Scope: Retrospective gateway observation, without historical approval or a downstream audit.
 - Supersedes: Health ownership in [ADR 0001](0001-gateway-boundaries.md), sequential probes in [ADR 0002](0002-service-communication.md), active health timeout/error observations in [ADR 0005](0005-timeouts-errors-retries.md), and health bypass of the registry in [ADR 0007](0007-proxy-resilience.md). Other observations remain scoped to their records.
+
+## Subsequent readiness/liveness and retry/timeout update
+
+On 2026-11-18, [ADR 0009](0009-proxy-retries-timeouts-and-health-routes.md)
+records that `HealthController` now exposes `GET /health/ready` and
+`GET /health/live` (calling `HealthService.getReadyStatus()` ->
+`getHealthStatus()` and `HealthService.getLiveStatus()`), that `RetryService`
+and `TimeoutService` are now implemented and wired into `ProxyService.proxyRequest`,
+and that the legacy unused `ProxyService.getServiceHealth` helper was removed.
+Readiness HTTP status codes and cache expiry policy remain open.
 
 ## Context
 

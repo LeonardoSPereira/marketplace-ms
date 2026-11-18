@@ -1,6 +1,6 @@
 # Health checks and aggregation
 
-Reviewed: 2026-11-09
+Reviewed: 2026-11-18 (active readiness/liveness routes and removal of legacy proxy health helper)
 
 ## Registration and active flow
 
@@ -61,29 +61,38 @@ populates the cache. It has no TTL, so lastCheck must be considered when judging
 freshness; a process restart clears it. Cache getters expose stored objects by
 reference. The health cache is separate from the product fallback cache.
 
-## Internal HealthService helpers
+## HealthService and readiness/liveness routes
 
-getHealthStatus performs fresh probes and builds a service-name dictionary.
-`Record<string, Omit<ServiceHealth, 'name'>>` permits dynamic keys and reuses the
-probe value shape without duplicating the name. This is compile-time typing,
-not validation, serialization, or a Swagger response schema.
+`HealthController` exposes `GET /health/ready` (`getReady()`) and
+`GET /health/live` (`getLive()`), which delegate to `HealthService`:
 
-The helper keeps gateway.status healthy and changes its aggregate status to
-degraded if any service is unhealthy, even when all are unhealthy. That policy
-differs from the controller's overallStatus calculation. getReadyStatus invokes
-that aggregation and returns ready or not_ready; getLiveStatus returns alive,
-a timestamp, and uptime without probing dependencies. The controller injects
-HealthService but has no active calls to these methods; ready/live handlers are
-commented out. These helpers do not establish HTTP readiness/liveness support or
-an orchestration integration.
+- `getReadyStatus()` awaits `getHealthStatus()` and returns
+  `{ status: 'ready' | 'not_ready', timestamp }`. Normal completion returns HTTP
+  200 even when `status` is `'not_ready'`.
+- `getLiveStatus()` returns `{ status: 'alive', timestamp, uptime }` with HTTP
+  200 without probing downstream services.
 
-The legacy [ProxyService.getServiceHealth](../../src/proxy/service/proxy.service.ts)
-remains an unused helper with a three-second direct HTTP timeout and response-body
-forwarding. It is not the current controller probe path.
+`getHealthStatus()` performs fresh concurrent probes via
+`HealthCheckService.checkAllServices()` (updating `healthCache`) and builds a
+service-name dictionary. `Record<string, Omit<ServiceHealth, 'name'>>` permits
+dynamic keys and reuses the probe value shape without duplicating the name. This
+is compile-time typing, not validation, serialization, or a Swagger response
+schema.
+
+`getHealthStatus()` keeps `gateway.status` healthy and changes its top-level
+`status` to `degraded` if any service is unhealthy, even when all four are
+unhealthy. That policy differs from `GET /health/services` (`overallStatus` of
+`healthy`, `degraded`, or `unhealthy`), and causes `getReadyStatus()` to report
+`'not_ready'` whenever at least one dependency fails. The full `getHealthStatus()`
+dictionary object is not returned directly by an HTTP route.
+
+The legacy `ProxyService.getServiceHealth` helper has been removed from
+[ProxyService](../../src/proxy/service/proxy.service.ts).
 
 ## Related records
 
-- [Health architecture ADR](../ADR/0008-health-checks.md)
+- [Health architecture ADR](../ADR/0008-health-checks.md),
+  [Proxy retries/timeouts and readiness/liveness ADR](../ADR/0009-proxy-retries-timeouts-and-health-routes.md)
 - [Architecture](../architecture.md), [configuration](../configuration.md),
   [operations](../operations.md)
 - [Health contracts](../../src/common/health-check/health-check.interface.ts)

@@ -1,6 +1,6 @@
 # HTTP logging implementation
 
-Reviewed: 2026-11-09 (health-related updates)
+Reviewed: 2026-11-18 (retry and timeout helper logger updates)
 
 [LoggingMiddleware](../../src/middleware/logging/logging.middleware.ts) uses Nest
 Logger with the HTTP context. [AppModule.configure](../../src/app.module.ts)
@@ -25,12 +25,14 @@ Do not assume an aborted response always produces a finish log.
 The middleware does not explicitly log bodies, Authorization headers, or token
 headers. However, originalUrl includes query strings and path values, and there
 is no redaction. Sensitive data embedded in URLs can therefore enter logs.
-The internal circuit breaker logs operation errors and state transitions, while
-fallback providers log cache keys, hits, defaults, and errors. ProxyService
-itself declares a logger but currently makes no logging calls. These helper logs
-are not emitted by auth paths. Active health probes emit breaker logs under
-health-prefixed keys, plus a service-name error log when a probe fails; they do
-not use the fallback cache providers. See [health checks](health-checks.md).
+The internal circuit breaker logs operation errors and state transitions,
+`RetryService` and `TimeoutService` log retry attempts, backoff delays, per-attempt
+failures, and exhaustion errors, and fallback providers log cache keys, hits,
+defaults, and errors. ProxyService itself declares a logger but currently makes
+no logging calls. These helper logs are not emitted by auth paths. Active health
+probes emit breaker logs under health-prefixed keys, plus a service-name error
+log when a probe fails; they do not use `RetryService`, `TimeoutService`, or the
+fallback cache providers. See [health checks](health-checks.md).
 Cache keys include caller-supplied paths
 and can contain sensitive URL data. AuthService maps failures without its own
 detailed upstream log entry. See [proxy resilience](proxy-resilience.md).

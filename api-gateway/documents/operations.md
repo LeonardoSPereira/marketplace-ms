@@ -1,6 +1,6 @@
 # Operations and troubleshooting
 
-Reviewed: 2026-11-09 (health-related sections; unrelated observations retain their prior scope)
+Reviewed: 2026-11-18 (readiness/liveness routes and proxy retry/timeout diagnostics)
 
 ## Start and inspect
 
@@ -19,14 +19,24 @@ aggregate is healthy for all healthy results, degraded for mixed results, and
 unhealthy when none are healthy. Normal completion still returns HTTP 200;
 HTTP status alone is not dependency readiness. Health handlers are throttled.
 
+The readiness endpoint (`GET /health/ready`) delegates to
+`HealthService.getReadyStatus()`, which runs `HealthService.getHealthStatus()`
+(triggering fresh concurrent probes across all four services). Because
+`getHealthStatus()` marks its aggregate status as `degraded` whenever any
+dependency is unhealthy, `/health/ready` returns `status: 'ready'` only when all
+four services succeed and `status: 'not_ready'` otherwise, while still returning
+HTTP 200. The liveness endpoint (`GET /health/live`) delegates to
+`HealthService.getLiveStatus()` and returns `status: 'alive'`, `timestamp`, and
+`uptime` with HTTP 200 without probing dependencies.
+
 Individual service lookups read cached observations without probing. An unknown
 result can mean an invalid name or no prior probe. Cached entries never expire;
-inspect lastCheck and run the all-services check for fresh observations. An open
-health circuit may skip the outbound request and produce an unhealthy result
-quickly. No scheduled checks or active readiness/liveness routes are wired.
+inspect lastCheck and run the all-services or readiness check for fresh
+observations. An open health circuit may skip the outbound request and produce
+an unhealthy result quickly. No scheduled background probes are wired.
 
 See [health checks](implementation/health-checks.md) for cache, failure messages,
-internal helper differences, and the legacy unused three-second probe helper.
+and aggregation differences between `GET /health/services` and `HealthService`.
 
 ## Build and startup limitations
 
@@ -64,13 +74,20 @@ counter and header behavior.
 
 ## Internal resilience diagnostics
 
-Login, registration, and session helpers bypass the circuit breaker. Active
-health probes use health-prefixed circuits, separate from proxy circuits, and
-do not use product fallback data.
-add no retries or deadlines despite their modules being imported. There
-is no HTTP circuit-inspection/reset endpoint. The circuit provider's inspection
-methods are internal helpers, and `/health` does not report circuit/cache state.
-See [proxy resilience](implementation/proxy-resilience.md) for fixed values and
+Login, registration, and session helpers bypass the circuit breaker, retry, and
+custom timeout helpers. Active health probes use health-prefixed circuits,
+separate from proxy circuits, and do not use `RetryService`, `TimeoutService`,
+or product fallback data. `ProxyService.proxyRequest` layers
+`CircuitBreakerService`, `RetryService.executeWithExponentialBackoff` (4 retries
+/ up to 5 attempts), and `TimeoutService.executeWithCustomTimeout` (10,000 ms
+`Promise.race` deadline) around its Axios call. When invoked, `RetryService`
+logs per-attempt progress (`Retry attempt ...`, `Attempt ... failed`,
+`Waiting ...ms before retry`, `All ... attempts failed`), and a single failing
+`proxyRequest` call can execute 5 timed-out attempts plus backoff delays before
+recording one circuit failure. There is no HTTP circuit-inspection/reset
+endpoint. The circuit provider's inspection methods are internal helpers, and
+`/health` does not report circuit/cache state. See
+[proxy resilience](implementation/proxy-resilience.md) for fixed values and
 failure behavior before interpreting internal helper logs as route protection.
 
 ## Current observability limits

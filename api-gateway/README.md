@@ -79,6 +79,7 @@ than claim historical approval.
 - [x] [Internal proxy resilience guide](documents/implementation/proxy-resilience.md).
 - [x] [Health checks and aggregation guide](documents/implementation/health-checks.md).
 - [x] [ADR 0008: dedicated concurrent health probes](documents/ADR/0008-health-checks.md).
+- [x] [ADR 0009: proxy retry/timeout layering and active readiness/liveness routes](documents/ADR/0009-proxy-retries-timeouts-and-health-routes.md).
 - [x] [Configuration guide: variables, defaults, and startup](documents/configuration.md).
 - [x] [Operations guide: health, logs, and troubleshooting](documents/operations.md).
 - [x] [Development-status register: gaps, limitations, and open questions](documents/development-status/README.md).
@@ -91,9 +92,11 @@ than claim historical approval.
 
 - Gateway health reports process information. Dependency checks probe users,
   products, checkout, and payments concurrently through separate health circuits;
-  individual lookups return cached observations. Dependency failures change the
-  aggregate body status while normal handler completion remains HTTP 200.
-  Readiness/liveness helpers exist but have no active HTTP handlers.
+  individual lookups return cached observations. Readiness (`/health/ready`)
+  triggers fresh concurrent probes through `HealthService` and reports `ready` or
+  `not_ready`; liveness (`/health/live`) reports process liveness and uptime.
+  Dependency failures change response body fields while normal handler completion
+  remains HTTP 200 across all health routes.
 - Swagger generates interactive API documentation. The login response uses
   `AuthResponseDto` (`user`, `accessToken`, `sessionToken`, `expiresIn`); the CLI
   plugin supplements DTO metadata. DTOs retain `ApiProperty` metadata and share a
@@ -113,19 +116,25 @@ than claim historical approval.
   5 requests per minute; registration configures a medium-window override of 3
   requests per minute. Exceeding the custom guard's hit limit returns HTTP 429.
 - An injectable proxy service supports outbound HTTP requests with service-specific
-  timeouts and optional user-context headers. Its internal circuit breaker uses
-  per-service state; product GET failures use cached data or an empty listing,
-  while other fallbacks throw errors. No HTTP forwarding routes call this method;
-  auth calls bypass its resilience logic. Health probes use the shared breaker
-  with separate keys and a throwing fallback.
+  timeouts and optional user-context headers. It layers a per-service circuit
+  breaker, exponential-backoff retries with jitter (4 retries / up to 5 attempts
+  per call), and a per-attempt `Promise.race` timeout alongside Axios's timeout.
+  Product GET failures use cached data or an empty listing, while other fallbacks
+  throw errors. No HTTP forwarding routes call this method; auth calls bypass its
+  resilience logic. Health probes use the shared breaker with separate keys and a
+  throwing fallback, without proxy retries or `TimeoutService`.
 - Environment configuration is loaded through Nest's `ConfigModule`. Downstream
   defaults use localhost ports `8001` through `8004`.
 
 Current limitations (details in the [status register](documents/development-status/limitations.md)):
 
-- Health observations have no cache expiry; successful downstream bodies are not
-  validated.
-
+- Health observations have no cache expiry, successful downstream bodies are not
+  validated, and `/health/ready` returns HTTP 200 even when reporting `not_ready`.
+- Internal proxy retries run inside the circuit breaker for all HTTP methods and
+  errors without idempotency or 4xx checks (requiring up to 15 failed attempts
+  across 3 calls to open a service circuit). `TimeoutService` does not clear its
+  `Promise.race` timers on early completion, and its unused `executeWithTimeout`
+  helper runs `retries` total attempts while logging `retries + 1`.
 - Internal proxy cache keys omit user identity, and circuit state has no limit
   on concurrent half-open
   attempts. These helpers need contract and isolation decisions before exposure.

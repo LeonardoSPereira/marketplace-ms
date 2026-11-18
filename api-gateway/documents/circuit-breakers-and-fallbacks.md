@@ -1,7 +1,7 @@
 # Understanding circuit breakers, fallbacks, and caching
 
 Created: 2026-11-05
-Updated: 2026-11-05
+Updated: 2026-11-18
 
 This learning guide explains the concepts first, then connects them to this
 gateway. For exact registrations, options, and limitations, see the
@@ -78,8 +78,11 @@ These mechanisms answer different questions and can be combined:
 A breaker still needs a way to bound slow operations, such as an HTTP timeout.
 It does not automatically cancel calls already in progress. Retrying a payment
 or another write can duplicate effects unless the operation has an appropriate
-idempotency strategy. This project's breaker executes once per allowed call;
-it does not implement retries.
+idempotency strategy. This project's `CircuitBreakerService` executes its
+supplied operation callback once per allowed call, while `ProxyService.proxyRequest`
+wraps that callback in `RetryService.executeWithExponentialBackoff` (4 retries /
+up to 5 attempts) and `TimeoutService.executeWithCustomTimeout` (10,000 ms
+`Promise.race` deadline alongside Axios's 10,000 ms timeout).
 
 ## What is a fallback?
 
@@ -141,11 +144,15 @@ successful earlier call stored a nonempty listing, then the product service
 became unavailable. This is an example of the internal helper, not an exposed
 HTTP route.
 
-1. The first failed attempt increments the failure count to one. The circuit
+1. The first failed `proxyRequest` call runs its inner retry cycle (up to 5
+   HTTP attempts with exponential backoff and jitter) before rejecting to the
+   breaker and incrementing the circuit failure count to one. The circuit
    remains `CLOSED`, and the cache fallback returns the earlier listing if usable.
-2. The second failed attempt increments the count to two and uses the fallback.
-3. The third failed attempt reaches the proxy's threshold of three. The circuit
-   becomes `OPEN`, starts a 30-second wait, and uses the fallback.
+2. The second failed `proxyRequest` call exhausts another retry cycle, increments
+   the count to two, and uses the fallback.
+3. The third failed `proxyRequest` call reaches the proxy's threshold of three
+   (up to 15 failed HTTP attempts across the three calls). The circuit becomes
+   `OPEN`, starts a 30-second wait, and uses the fallback.
 4. A call during that wait skips the product service and uses the fallback
    immediately. It does not wait for another outbound HTTP timeout.
 5. The next call after the wait moves the circuit to `HALF_OPEN` and tries the
@@ -167,8 +174,13 @@ The responsibilities are split between injectable providers:
 - [CircuitBreakerService](../src/common/circuit-breaker/circuit-breaker.service.ts)
   decides whether to attempt the operation, records outcomes, and invokes the
   supplied fallback when necessary.
-- [ProxyService](../src/proxy/service/proxy.service.ts) supplies the outbound
-  operation, chooses the service's fallback, and stores successful GET bodies.
+- [ProxyService](../src/proxy/service/proxy.service.ts) composes the circuit
+  breaker, exponential-backoff retry, per-attempt timeout, and outbound HTTP
+  request, chooses the service's fallback, and stores successful GET bodies.
+- [RetryService](../src/common/retry/retry.service.ts) and
+  [TimeoutService](../src/common/timeout/timeout.service.ts) wrap each proxy
+  circuit attempt with exponential-backoff retries (4 retries / up to 5 attempts)
+  and a `Promise.race` per-attempt deadline (`service.timeout` = 10,000 ms).
 - [CacheFallbackService](../src/common/fallback/cache.fallback.ts) stores data and
   creates a callback that selects cached data or a default.
 - [DefaultFallbackService](../src/common/fallback/default.fallback.ts) creates
@@ -178,15 +190,18 @@ The responsibilities are split between injectable providers:
 These providers are wired together through
 [ProxyModule](../src/proxy/proxy.module.ts). No controller currently calls
 `proxyRequest`; login, registration, session validation, and health probes bypass
-its proxy circuit and fallback path. Active health probes use separate health
-keys in the same breaker registry and a throwing fallback; see
+its proxy circuit, retry, timeout, and fallback path. Active health probes use
+separate health keys in the same breaker registry and a throwing fallback; see
 [health checks](implementation/health-checks.md).
 
 The current implementation also has important boundaries: circuit/cache state is
-local to one process, circuits are shared by service name, cache keys omit caller
+local to one process, circuits are shared by service name, retries run inside
+the breaker without HTTP method or 4xx filtering, cache keys omit caller
 identity and headers, and results do not indicate whether they came from a
 fallback. The breaker's option named `timeout` does not enforce an operation
-deadline; the outbound HTTP timeout does. Read the
+deadline; `TimeoutService.executeWithCustomTimeout` and the outbound Axios HTTP
+timeout do. Read the
 [implementation guide](implementation/proxy-resilience.md) for the complete
-mechanics and limitations, and [ADR 0007](ADR/0007-proxy-resilience.md) for the
+mechanics and limitations, and [ADR 0007](ADR/0007-proxy-resilience.md) and
+[ADR 0009](ADR/0009-proxy-retries-timeouts-and-health-routes.md) for the
 recorded architecture and unresolved policy choices.

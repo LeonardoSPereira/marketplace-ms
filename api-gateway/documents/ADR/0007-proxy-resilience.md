@@ -2,17 +2,21 @@
 
 - Recorded: 2026-11-05
 - Health update: 2026-11-09
-- Status: Partially superseded by [ADR 0008](0008-health-checks.md) for health; other questions remain.
+- Retry/timeout update: 2026-11-18
+- Status: Partially superseded by [ADR 0008](0008-health-checks.md) for health and [ADR 0009](0009-proxy-retries-timeouts-and-health-routes.md) for nested proxy retries and custom timeouts; circuit, cache, and fallback observations remain.
 - Scope: Retrospective record of internal helper behavior, without historical approval.
-- Supersedes: The proxy error-propagation description in [ADR 0005](0005-timeouts-errors-retries.md). Its auth, health, timeout, and retry observations remain applicable.
+- Supersedes: The proxy error-propagation description in [ADR 0005](0005-timeouts-errors-retries.md). Its auth, health, timeout, and retry observations remain applicable unless superseded by ADR 0008 or ADR 0009.
 
-## Subsequent health implementation
+## Subsequent health and retry/timeout updates
 
 Health-specific observations below describe the earlier snapshot. On 2026-11-09,
 [ADR 0008](0008-health-checks.md) records dedicated concurrent probes with
-10,000 ms timeouts, health circuit keys, and cached observations. It supersedes
-the earlier active health ownership, sequencing, timeout, and bypass descriptions;
-other observations keep their original scope. Readiness/liveness policy remains open.
+10,000 ms timeouts, health circuit keys, and cached observations. On 2026-11-18,
+[ADR 0009](0009-proxy-retries-timeouts-and-health-routes.md) supersedes the
+no-retry and Axios-only deadline observations below: `ProxyService.proxyRequest`
+now nests `RetryService.executeWithExponentialBackoff` (4 retries / up to 5
+attempts) and `TimeoutService.executeWithCustomTimeout` (10,000 ms `Promise.race`)
+inside each `CircuitBreakerService.executeWithCircuitBreaker` execution.
 
 ## Context
 

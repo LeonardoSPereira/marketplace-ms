@@ -1,25 +1,25 @@
 # Architecture and request flow
 
-Reviewed: 2026-11-09 (health-related sections; unrelated observations retain their prior scope)
+Reviewed: 2026-11-18 (proxy retry/timeout and readiness/liveness updates; unrelated observations retain their prior scope)
 
 The gateway is an ESM Nest application using Express. This document describes
 this repository; downstream service internals have not been reviewed.
 
 ## Composition
 
-| Component                      | Current responsibility                                                        |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| `main.ts`                      | Bootstrap, Helmet, CORS, global validation, Swagger, HTTP listener            |
-| `AppModule`                    | Compose modules, register logging middleware and global throttler             |
-| `AuthModule`                   | Register auth controller/service and HTTP/JWT dependencies                    |
-| `ProxyModule`                  | Export an internal HTTP forwarding helper and a legacy unused health helper   |
-| `HealthModule`                 | Register the active health controller and internal aggregation service        |
-| `HealthCheckModule`            | Export concurrent downstream probes and their observation cache               |
-| `RetryModule`, `TimeoutModule` | Register empty scaffold services; no retry or deadline behavior               |
-| `CircuitBreakerModule`         | Export process-local circuit state for proxy helpers and active health probes |
-| `FallbackModule`               | Export cache and default/error fallback factories                             |
-| `MiddlewareModule`             | Provide logging middleware; retain a separate throttler config                |
-| Downstream configuration       | Addresses for users, products, checkout, payments                             |
+| Component                      | Current responsibility                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `main.ts`                      | Bootstrap, Helmet, CORS, global validation, Swagger, HTTP listener                               |
+| `AppModule`                    | Compose modules, register logging middleware and global throttler                                |
+| `AuthModule`                   | Register auth controller/service and HTTP/JWT dependencies                                       |
+| `ProxyModule`                  | Export an internal HTTP forwarding helper composing circuit breaker, retry, timeout, cache       |
+| `HealthModule`                 | Register the active health controller (including readiness/liveness) and `HealthService`         |
+| `HealthCheckModule`            | Export concurrent downstream probes and their observation cache                                  |
+| `RetryModule`, `TimeoutModule` | Export exponential-backoff retry (`RetryService`) and `Promise.race` deadline (`TimeoutService`) |
+| `CircuitBreakerModule`         | Export process-local circuit state for proxy helpers and active health probes                    |
+| `FallbackModule`               | Export cache and default/error fallback factories                                                |
+| `MiddlewareModule`             | Provide logging middleware; retain a separate throttler config                                   |
+| Downstream configuration       | Addresses for users, products, checkout, payments                                                |
 
 Users handles delegated login and registration requests. All four services are
 health-probe targets. Products, checkout, and payments have no business-facing
@@ -48,20 +48,30 @@ are inactive.
 
 HealthController uses the exported HealthCheckService for concurrent probes with
 10,000 ms per-service timeouts and separate health circuit keys. Gateway process
-information, dependency aggregation, and cached observations have distinct
-handlers. HealthService aggregation/readiness/liveness methods remain internal
-helpers. See [health checks](implementation/health-checks.md) for registration,
-cache behavior, error contracts, and policy differences. AppController currently
-has no route handlers.
+information, dependency aggregation, cached single-service observations,
+readiness, and liveness have distinct handlers. The readiness handler delegates
+to `HealthService.getReadyStatus()`, which runs `HealthService.getHealthStatus()`
+(invoking `HealthCheckService.checkAllServices()`) and reports `ready` or
+`not_ready` with HTTP 200; liveness delegates to `HealthService.getLiveStatus()`
+without probing dependencies. `HealthService.getHealthStatus()` is not exposed as
+its own route. See [health checks](implementation/health-checks.md) for
+registration, cache behavior, error contracts, and policy differences.
+AppController currently has no route handlers.
 
 ## Internal proxy path
 
-`ProxyModule` injects HTTP, circuit-breaker, and fallback services into
-`ProxyService`. Its `proxyRequest` helper wraps an outbound operation in a circuit
-keyed by service name. Product GET failures can return cached data or an empty
-listing; other service/method fallbacks throw plain errors. This method has no
-controller caller. Auth requests bypass this path. Active health probes use the same breaker
-provider through separate health keys, without product cache/default fallbacks.
+`ProxyModule` injects HTTP, circuit-breaker, fallback, timeout, and retry
+services into `ProxyService`. Its `proxyRequest` helper layers four steps:
+an outer circuit breaker keyed by `proxy-${serviceName}`, an exponential-backoff
+retry loop (`RetryService.executeWithExponentialBackoff` with 4 retries / up to
+5 total attempts), a per-attempt `Promise.race` deadline
+(`TimeoutService.executeWithCustomTimeout` at `service.timeout`), and the
+outbound Axios `HttpService.request` call (also configured with
+`timeout: service.timeout`). Product GET failures can return cached data or an
+empty listing; other service/method fallbacks throw plain errors. This method has
+no controller caller. Auth requests bypass this path. Active health probes use
+the same breaker provider through separate health keys, without retries,
+`TimeoutService`, or product cache/default fallbacks.
 
 The helper returns a response body or fallback data as `Promise<unknown>`. See [proxy resilience](implementation/proxy-resilience.md) for
 state transitions, timeout semantics, cache isolation, and contract limitations.

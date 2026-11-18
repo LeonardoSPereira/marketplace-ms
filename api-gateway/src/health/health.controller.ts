@@ -6,7 +6,8 @@ import { HealthCheckService } from '@/common/health-check/health-check.service.j
 
 import { HealthService } from './health.service.js'
 
-// Expose process health, fresh dependency checks, and cached observations.
+// Expose process health, fresh dependency checks, cached observations, and
+// readiness/liveness endpoints. Normal completion returns HTTP 200 on all routes.
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
@@ -92,6 +93,8 @@ export class HealthController {
     description: 'Readiness status retrieved successfully',
   })
   async getReady() {
+    // Runs fresh probes through HealthService.getHealthStatus(); returns HTTP 200
+    // even when the body reports status: 'not_ready'.
     const ready = this.healthService.getReadyStatus()
 
     return ready
@@ -103,6 +106,7 @@ export class HealthController {
     description: 'Liveness status retrieved successfully',
   })
   async getLive() {
+    // Reports process liveness and uptime without probing downstream services.
     const live = this.healthService.getLiveStatus()
 
     return live

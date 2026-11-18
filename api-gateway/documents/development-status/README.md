@@ -1,6 +1,6 @@
 # Development status
 
-Updated: 2026-11-09 (health entries and scaffold observations)
+Updated: 2026-11-18 (proxy retry/timeout layering and active readiness/liveness routes)
 
 The gateway and the other services that will form this marketplace microservices
 project are under active development. A substantial part of the intended system
@@ -28,9 +28,13 @@ Database ownership belongs to downstream services; its absence in this gateway
 is not itself a missing gateway feature.
 
 The 2026-11-09 update records concurrent health probes, partially resolves
-LIM-009 and DEC-012, and records the build/startup evidence for LIM-016. Health
-cache limitations and readiness/liveness gaps remain tracked. See
-[ADR 0008](../ADR/0008-health-checks.md).
+LIM-009 and DEC-012, and records the build/startup evidence for LIM-016. The
+2026-11-18 update records active `GET /health/ready` and `GET /health/live`
+routes (partially resolving GAP-006) and the implementation of `RetryService`
+and `TimeoutService` layered inside `ProxyService.proxyRequest` (adding LIM-018
+and LIM-019). Health cache limitations, readiness status-code policy, and retry
+safety questions remain tracked. See [ADR 0008](../ADR/0008-health-checks.md)
+and [ADR 0009](../ADR/0009-proxy-retries-timeouts-and-health-routes.md).
 
 ## Maintenance
 

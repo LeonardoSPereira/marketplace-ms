@@ -1,6 +1,6 @@
 # Configuration and startup
 
-Reviewed: 2026-11-09 (health-related sections; unrelated observations retain their prior scope)
+Reviewed: 2026-11-18 (proxy retry/timeout options and health updates; unrelated observations retain their prior scope)
 
 Configuration currently uses both ConfigService and direct environment reads.
 There is no application-wide startup schema that validates required settings.
@@ -37,17 +37,28 @@ interpreting configured counts as independent enforced quotas.
 ## Fixed options and units
 
 Service request timeouts are 10,000 milliseconds in gateway.config.ts. Active
-health probes use that value for both Axios and RxJS timeout handling. The unused
-legacy ProxyService health helper retains a separate 3,000 ms timeout. These
-are not environment options. Health circuits use the generic breaker defaults
-below; see [health checks](implementation/health-checks.md). Internal proxy circuits use a failure threshold of 3 and a 30,000 ms
-reset delay. Their `timeout: 30_000` option does not enforce an operation deadline.
-The generic breaker defaults are 5 failures, `timeout: 60_000`, and
-`resetTimeout: 30_000`. Cache fallback max age defaults to 300,000 ms. These values
-are fixed in code; the product fallback cache applies only to the internal proxy
-helper. Empty retry/timeout scaffolds supply no additional options or behavior. See
-[proxy resilience](implementation/proxy-resilience.md). The JWT module has a 24-hour signing default, but login does not sign
-tokens. The documented response expiresIn unit remains unspecified.
+health probes use that value for both Axios and RxJS timeout handling; the
+internal proxy helper passes it to both `TimeoutService.executeWithCustomTimeout`
+(`Promise.race`) and Axios `timeout`. These are not environment options. Health
+circuits use the generic breaker defaults below; see
+[health checks](implementation/health-checks.md). Internal proxy circuits use a
+failure threshold of 3 and a 30,000 ms reset delay. Their `timeout: 30_000`
+option does not enforce an operation deadline. The generic breaker defaults are
+5 failures, `timeout: 60_000`, and `resetTimeout: 30_000`. Cache fallback max
+age defaults to 300,000 ms.
+
+`RetryService` defaults to `maxRetries: 3` (4 total attempts), `baseDelay: 1000`
+ms, `maxDelay: 30000` ms, `backoffMultiplier: 2`, and `jitter: true` (scaling
+each exponential delay by `0.5 + Math.random() * 0.5`). `ProxyService.proxyRequest`
+overrides `maxRetries` to `4` (up to 5 total attempts per circuit-breaker
+execution). `TimeoutService` also defines defaults for its unused
+`executeWithTimeout` helper (`timeout: 5_000` ms, `retries: 3`,
+`backoffMultiplier: 2`, `maxBackoff: 30_000` ms, with a 1,000 ms initial retry
+delay). All of these values are fixed in code; the product fallback cache,
+`RetryService`, and `TimeoutService` apply only to the internal proxy helper.
+See [proxy resilience](implementation/proxy-resilience.md). The JWT module has a
+24-hour signing default, but login does not sign tokens. The documented response
+expiresIn unit remains unspecified.
 
 CORS accepts requests without Origin. Configured browser origins must match
 exactly, including scheme and port; avoid spaces between comma-separated entries.
