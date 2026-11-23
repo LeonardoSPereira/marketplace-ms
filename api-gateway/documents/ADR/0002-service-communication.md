@@ -1,0 +1,58 @@
+# ADR 0002: Synchronous HTTP communication
+
+- Recorded: 2026-11-03
+- Health update: 2026-11-09
+- Reviewed: 2026-11-05
+- Status: Partially superseded by [ADR 0008](0008-health-checks.md) for health; other questions remain.
+- Scope: Retrospective description, not approval of unresolved policy or defects.
+
+## Subsequent health implementation
+
+Health-specific observations below describe the earlier snapshot. On 2026-11-09,
+[ADR 0008](0008-health-checks.md) records dedicated concurrent probes with
+10,000 ms timeouts, health circuit keys, and cached observations. It supersedes
+the earlier active health ownership, sequencing, timeout, and bypass descriptions;
+other observations keep their original scope. Readiness/liveness policy remains open.
+
+## Context
+
+Auth handlers need a downstream response before answering clients. Health
+reporting probes each configured service. The repository has no broker transport,
+event producer, consumer, or asynchronous messaging configuration.
+
+## Recorded decision and implementation
+
+Use the installed Nest Axios integration for current downstream communication.
+`HttpService` returns Observables; `firstValueFrom` lets services await one HTTP
+response. Auth requests and health probes use finite per-call timeouts.
+
+Synchronous means the HTTP response depends on downstream completion; awaiting
+network I/O does not itself block the Node.js event loop.
+
+## Alternatives
+
+Messaging could decouple event producers from consumers but would require event
+contracts, delivery handling, and infrastructure. Direct fetch or another client
+would introduce a second HTTP integration. These are alternatives for future
+work, not evidence of an earlier evaluation.
+
+## Consequences and limitations
+
+Current request flow is easy to follow but inherits downstream latency and
+availability. Health checks are sequential because each array entry is awaited
+before Promise.all receives it. Their latency can accumulate across services.
+
+## Open questions
+
+Tracked as DEC-002 and DEC-012 in the [decision register](../development-status/open-questions.md).
+
+Choose asynchronous messaging only when a concrete workflow needs it. Decide
+whether health probes should run concurrently; no concurrency refactor is part
+of this record.
+
+## Evidence
+
+- [src/auth/services/auth.service.ts](../../src/auth/services/auth.service.ts)
+- [src/proxy/service/proxy.service.ts](../../src/proxy/service/proxy.service.ts)
+- [src/app.controller.ts](../../src/app.controller.ts)
+- [src/proxy/proxy.module.ts](../../src/proxy/proxy.module.ts)
