@@ -9,6 +9,7 @@ Check other active branches for the latest updates and features.
 ## Services
 
 - **[API Gateway](api-gateway/README.md)**: NestJS entry point for the marketplace microservices, providing request routing, rate limiting, health checks, and downstream proxy resilience.
+- **[Checkout Service](checkout-service/README.md)**: NestJS microservice for checkout and order workflows (currently at initial starter baseline), planned to communicate asynchronously with the payments service via RabbitMQ.
 - **[Messaging](messaging/README.md)**: RabbitMQ broker infrastructure (`docker-compose.yml`) and architecture decision records covering asynchronous messaging versus synchronous HTTP and broker selection.
 
 
